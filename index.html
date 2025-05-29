@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Chat Web</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 DeepSeek Chat</h1>
+            <div class="api-key-container">
+                <input type="password" id="api-key" placeholder="Введите ваш API-ключ DeepSeek">
+                <button id="save-key">Сохранить</button>
+            </div>
+        </header>
+
+        <div id="chat-container">
+            <div id="messages"></div>
+        </div>
+
+        <div class="input-area">
+            <textarea 
+                id="user-input" 
+                placeholder="Введите сообщение (Shift+Enter для переноса, Enter для отправки)..." 
+                rows="4"
+            ></textarea>
+            <button id="send-btn">Отправить</button>
+        </div>
+        
+        <footer>
+            <div class="status" id="status">Готов к работе</div>
+            <div class="controls">
+                <button id="clear-btn">Очистить чат</button>
+                <button id="export-btn">Экспорт чата</button>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>

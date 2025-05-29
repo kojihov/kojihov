@@ -1,0 +1,282 @@
+/* Обновленные стили с улучшенным оформлением кода */
+:root {
+    --primary: #6e6edf;
+    --dark: #1a1a2e;
+    --light: #f0f0f5;
+    --user-msg: #e3f2fd;
+    --bot-msg: #f5f5f5;
+    --code-bg: #f8f8f8;
+    --code-border: #e0e0e0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+    padding-bottom: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.api-key-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+#api-key {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#save-key {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 14px;
+}
+
+#save-key:hover {
+    background-color: #5a5ac0;
+}
+
+#chat-container {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    min-height: 60vh;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message {
+    max-width: 90%;
+    padding: 15px;
+    border-radius: 12px;
+    line-height: 1.6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.user-message {
+    align-self: flex-end;
+    background-color: var(--user-msg);
+    border-bottom-right-radius: 4px;
+}
+
+.bot-message {
+    align-self: flex-start;
+    background-color: var(--bot-msg);
+    border-bottom-left-radius: 4px;
+    white-space: pre-wrap;
+}
+
+/* Стили для блоков кода */
+pre {
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#user-input {
+    flex: 1;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+    font-size: 16px;
+    min-height: 100px;
+}
+
+#send-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    align-self: flex-end;
+    height: 50px;
+}
+
+#send-btn:hover {
+    background-color: #5a5ac0;
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    margin-top: auto;
+}
+
+.status {
+    color: #666;
+    font-size: 14px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+#clear-btn, #export-btn {
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    border: none;
+    transition: opacity 0.3s;
+}
+
+#clear-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+#clear-btn:hover {
+    background-color: #d32f2f;
+}
+
+#export-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#export-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Анимация загрузки */
+.typing-indicator {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 20px;
+}
+
+.typing-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #666;
+    position: absolute;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+    left: 0;
+    animation-delay: 0s;
+}
+
+.typing-dot:nth-child(2) {
+    left: 15px;
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    left: 30px;
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .api-key-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #api-key {
+        width: 100%;
+    }
+    
+    .input-area {
+        flex-direction: column;
+    }
+    
+    #send-btn {
+        width: 100%;
+        height: auto;
+        padding: 12px;
+    }
+    
+    footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
