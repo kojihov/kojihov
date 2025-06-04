@@ -9,6 +9,32 @@
     --code-border: #e0e0e0;
 }
 
+/* Стили для эмодзи-заголовков */
+.header-block {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+.header-emoji {
+  margin-right: 10px;
+  font-size: 1.4em;
+}
+
+/* Статусные сообщения с эмодзи */
+.status-success::before,
+.status-error::before,
+.status-ready::before {
+  content: "✅ ";
+}
+.status-error::before {
+  content: "❌ ";
+}
+.status-processing::before {
+  content: "⏳ ";
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
