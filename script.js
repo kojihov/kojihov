@@ -3,6 +3,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_MODEL = 'deepseek-chat';
     const MAX_TOKENS = 4096;
     
+    // Базовый промпт с вашим стилем оформления
+    const BASE_PROMPT = `Ты — технический эксперт, создающий структурированные ответы. Строго соблюдай правила:
+1️⃣ **Структура:**  
+   • Заголовок темы → **жирный + эмодзи**  
+   • Подпункты → через \`-\` или \`•\`  
+   • Технические детали → с цифрами/единицами измерений  
+   • Источники → в квадратных скобках [1]  
+   • Ключевые мысли → 💡 **жирно**  
+
+2️⃣ **Визуал:**  
+   • Каждый смысловой блок начинай с **тематического эмодзи** (🔍, 🧪, ⚙️, 📦, 💡)  
+   • Для списков используй \`•\` вместо цифр (кроме пошаговых инструкций)  
+   • Дели текст на блоки по 3-5 строк  
+
+3️⃣ **Тон:**  
+   • Профессионально, но дружелюбно (используй смайлики в конце ключевых выводов 😊)  
+   • Никакой "воды" — только факты и выводы  
+
+4️⃣ **Оформление ссылок:**  
+   • URL → указывай как \`[подпись](https://...)\`  
+   • Пример: Наш сайт: [modponsis.ru](https://modponsis.ru/)  
+
+Пример корректного ответа:  
+🔍 **Область применения**  
+- Пункт 1...  
+- Пункт 2 [3]  
+💡 **Вывод:** Главное преимущество... 😊`;
+    
     const chatContainer = document.getElementById('chat-container');
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('user-input');
@@ -24,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = apiKeyInput.value.trim();
         if (key) {
             localStorage.setItem('deepseekApiKey', key);
-            showStatus('Ключ сохранен!', 'success');
+            showStatus('Ключ сохранен! ✅', 'success');
         } else {
             showStatus('Введите API ключ', 'error');
         }
@@ -41,14 +69,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (!apiKey) {
-            showStatus('Введите и сохраните API ключ!', 'error');
+            showStatus('Введите и сохраните API ключ! 🔑', 'error');
             return;
         }
         
         // Добавление сообщения пользователя
         addMessage(message, 'user');
         userInput.value = '';
-        showStatus('Генерация ответа...', 'processing');
+        showStatus('Генерация ответа... ⏳', 'processing');
         
         // Показать индикатор печати
         showTypingIndicator();
@@ -62,7 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     model: DEFAULT_MODEL,
-                    messages: [{ role: 'user', content: message }],
+                    messages: [
+                        {
+                            role: "system",
+                            content: BASE_PROMPT
+                        },
+                        {
+                            role: "user",
+                            content: message
+                        }
+                    ],
                     max_tokens: MAX_TOKENS,
                     stream: false
                 })
@@ -79,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Удалить индикатор печати и добавить ответ
             removeTypingIndicator();
             addMessage(botResponse, 'bot');
-            showStatus('Готов к работе', 'ready');
+            showStatus('Готов к работе ✅', 'ready');
             
             // Подсветка кода
             setTimeout(() => {
@@ -91,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Ошибка:', error);
             removeTypingIndicator();
-            addMessage(`⚠️ Ошибка: ${error.message}`, 'bot');
-            showStatus('Ошибка запроса', 'error');
+            addMessage(`⚠️ **Ошибка запроса**\n${error.message}`, 'bot');
+            showStatus('Ошибка запроса ❌', 'error');
         }
     }
     
@@ -105,6 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let formattedContent = content;
         formattedContent = formattedContent.replace(/```(\w+)?\s*([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
         formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Добавляем поддержку эмодзи в заголовках
+        formattedContent = formattedContent.replace(
+            /^(🔍|🧪|⚙️|📦|💡|🌊|⚠️|🚀|✅|❌|🔄|🏭|⚖️)\s*\*\*(.*?)\*\*/gm, 
+            '<div class="header-block"><span class="header-emoji">$1</span><strong>$2</strong></div>'
+        );
         
         messageDiv.innerHTML = formattedContent;
         messagesDiv.appendChild(messageDiv);
@@ -142,39 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Очистка чата
     clearBtn.addEventListener('click', () => {
         messagesDiv.innerHTML = '';
-        showStatus('Чат очищен', 'success');
+        showStatus('Чат очищен 🧹', 'success');
     });
     
     // Экспорт чата
     exportBtn.addEventListener('click', () => {
         const chatContent = Array.from(messagesDiv.querySelectorAll('.message'))
             .map(msg => {
-                const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ты — технический эксперт, создающий структурированные ответы. Строго соблюдай правила:
-1️⃣ **Структура:**  
-   • Заголовок темы → **жирный + эмодзи**  
-   • Подпункты → через `-` или `•`  
-   • Технические детали → с цифрами/единицами измерений  
-   • Источники → в квадратных скобках [1]  
-   • Ключевые мысли → 💡 **жирно**  
-
-2️⃣ **Визуал:**  
-   • Каждый смысловой блок начинай с **тематического эмодзи** (🔍, 🧪, ⚙️, 📦, 💡)  
-   • Для списков используй `•` вместо цифр (кроме пошаговых инструкций)  
-   • Дели текст на блоки по 3-5 строк  
-
-3️⃣ **Тон:**  
-   • Профессионально, но дружелюбно (используй смайлики в конце ключевых выводов 😊)  
-   • Никакой "воды" — только факты и выводы  
-
-4️⃣ **Оформление ссылок:**  
-   • URL → указывай как `[подпись](https://...)`  
-   • Пример: Наш сайт: [modponsis.ru](https://modponsis.ru/)  
-
-Пример корректного ответа:  
-🔍 **Область применения**  
-- Пункт 1...  
-- Пункт 2 [3]  
-💡 **Вывод:** Главное преимущество... 😊  ';
+                const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ассистент'
                 return `${sender}: ${msg.textContent}`;
             })
             .join('\n\n');
@@ -190,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        showStatus('Чат экспортирован', 'success');
+        showStatus('Чат экспортирован 📥', 'success');
     });
     
     // Отображение статуса
@@ -227,5 +245,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Инициализация статуса
-    showStatus('Готов к работе', 'ready');
+    showStatus('Готов к работе ✅', 'ready');
 });
