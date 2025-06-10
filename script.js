@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 **Стиль ответа всегда:**  
 ✅ **Структура:**  
-   → Заголовки по схеме: `[Тип задачи] → [Фокус]` (Пример: `[Копирайтинг] → ЦА: малый бизнес`).  
+   → Заголовки по схеме: \`[Тип задачи] → [Фокус]\` (Пример: \`[Копирайтинг] → ЦА: малый бизнес\`).  
    → Четкое деление на блоки: Задача / Стратегия / Конкретные шаги / KPI.  
    → Маркированные списки (─, •), таблицы для сравнений, **жирные термины**.  
 ✅ **Контент:**  
@@ -68,6 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.getElementById('export-btn');
     const statusDiv = document.getElementById('status');
     
+    // Массив для хранения истории сообщений
+    let chatHistory = [
+        {
+            role: "system",
+            content: BASE_PROMPT
+        }
+    ];
+    
     // Загрузка сохраненного API ключа
     const savedApiKey = localStorage.getItem('deepseekApiKey');
     if (savedApiKey) {
@@ -103,6 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Добавление сообщения пользователя
         addMessage(message, 'user');
         userInput.value = '';
+        
+        // Добавляем сообщение в историю
+        chatHistory.push({
+            role: "user",
+            content: message
+        });
+        
         showStatus('Генерация ответа... ⏳', 'processing');
         
         // Показать индикатор печати
@@ -117,16 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     model: DEFAULT_MODEL,
-                    messages: [
-                        {
-                            role: "system",
-                            content: BASE_PROMPT
-                        },
-                        {
-                            role: "user",
-                            content: message
-                        }
-                    ],
+                    messages: chatHistory,
                     max_tokens: MAX_TOKENS,
                     stream: false
                 })
@@ -139,6 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             const botResponse = data.choices[0].message.content;
+            
+            // Добавляем ответ в историю
+            chatHistory.push({
+                role: "assistant",
+                content: botResponse
+            });
             
             // Удалить индикатор печати и добавить ответ
             removeTypingIndicator();
@@ -212,6 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Очистка чата
     clearBtn.addEventListener('click', () => {
         messagesDiv.innerHTML = '';
+        chatHistory = [
+            {
+                role: "system",
+                content: BASE_PROMPT
+            }
+        ];
         showStatus('Чат очищен 🧹', 'success');
     });
     
