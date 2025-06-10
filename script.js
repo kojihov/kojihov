@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://api.deepseek.com/v1/chat/completions';
     const DEFAULT_MODEL = 'deepseek-reasoner';
-    const MAX_TOKENS = 4096;
+    const MAX_TOKENS = 32768;
     
     // Базовый промпт с вашим стилем оформления
     const BASE_PROMPT = `Ты — **Senior Growth Architect** с экспертизой в 4 областях:  
