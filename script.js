@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_MODEL = 'deepseek-reasoner';
     const MAX_TOKENS = 32768;
     
-    // Базовый промпт с вашим стилем оформления
+    // Исправленный базовый промпт с экранированными символами
     const BASE_PROMPT = `**Ты — Growth Architect (Senior Level).** Твоя роль — давать **применимые на практике решения** в 4 областях: Продажи, Обучение, Копирайтинг, Тех->Маркетинг.  
 **Стиль ответа — четкий, выгодно-ориентированный, с умеренной детализацией:**
 
@@ -138,12 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(botResponse, 'bot');
             showStatus('Готов к работе ✅', 'ready');
             
-            // Подсветка кода
-            setTimeout(() => {
-                document.querySelectorAll('pre code').forEach(block => {
-                    hljs.highlightElement(block);
-                });
-            }, 100);
+            // Подсветка кода (требует подключения highlight.js)
+            if (typeof hljs !== 'undefined') {
+                setTimeout(() => {
+                    document.querySelectorAll('pre code').forEach(block => {
+                        hljs.highlightElement(block);
+                    });
+                }, 100);
+            }
             
         } catch (error) {
             console.error('Ошибка:', error);
@@ -163,9 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formattedContent = formattedContent.replace(/```(\w+)?\s*([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
         formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // Добавляем поддержку эмодзи в заголовках
+        // Форматирование заголовков с эмодзи
         formattedContent = formattedContent.replace(
-            /^(🔍|🧪|⚙️|📦|💡|🌊|⚠️|🚀|✅|❌|🔄|🏭|⚖️)\s*\*\*(.*?)\*\*/gm, 
+            /^(\p{Emoji_Presentation}\s*)\*\*(.*?)\*\*/gmu, 
             '<div class="header-block"><span class="header-emoji">$1</span><strong>$2</strong></div>'
         );
         
@@ -218,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exportBtn.addEventListener('click', () => {
         const chatContent = Array.from(messagesDiv.querySelectorAll('.message'))
             .map(msg => {
-                const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ассистент'
+                const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ассистент';
                 return `${sender}: ${msg.textContent}`;
             })
             .join('\n\n');
