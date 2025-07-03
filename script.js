@@ -273,6 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Генерация JWT токена
             const token = generateKlingToken(accessKey, secretKey);
             if (!token) throw new Error('Ошибка генерации токена');
+            
+            // Логирование токена для отладки
+            console.log('Generated JWT Token:', token);
+            addDebugMessage(`Сгенерированный токен: ${token}`, 'debug');
 
             const payload = {
                 model_name: "kling-v2",
@@ -312,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Не удалось получить изображение');
             }
         } catch (error) {
+            console.error('Ошибка генерации изображения:', error);
             addMessage(`⚠️ **Ошибка генерации**\n${error.message}`, 'bot');
             showStatus('Ошибка генерации ❌', 'error');
         } finally {
@@ -322,18 +327,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Генерация JWT токена для Kling
     function generateKlingToken(accessKey, secretKey) {
         try {
-            const header = { alg: 'HS256', typ: 'JWT' };
-            const currentTime = Math.floor(Date.now() / 1000);
+            // Проверка наличия необходимых библиотек
+            if (typeof jwt_encode !== 'function') {
+                throw new Error('JWT encode function not found');
+            }
             
-            const payload = {
-                iss: accessKey,
-                exp: currentTime + 1800,
-                nbf: currentTime - 5
+            const header = {
+                "alg": "HS256",
+                "typ": "JWT"
             };
             
-            return jwt_encode(payload, secretKey, header);
+            const currentTime = Math.floor(Date.now() / 1000); // в секундах
+            const expirationTime = currentTime + 1800; // 30 минут
+            const notBefore = currentTime - 5; // 5 секунд назад
+            
+            const payload = {
+                "iss": accessKey,
+                "exp": expirationTime,
+                "nbf": notBefore
+            };
+            
+            // Генерация токена с правильным порядком параметров
+            const token = jwt_encode(payload, secretKey, header);
+            return token;
         } catch (e) {
             console.error('JWT generation error:', e);
+            addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
             return null;
         }
     }
@@ -344,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Превышено время ожидания генерации');
         }
         
-        // Обновляем статус каждые 5 секунд
+        // Обновляем статус
         statusDiv.textContent = `Генерация изображения... (${attempts * 5} сек)`;
         
         await new Promise(resolve => setTimeout(resolve, 5000));
@@ -355,7 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP error: ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP error: ${response.status} - ${errorText}`);
             }
             
             const data = await response.json();
@@ -372,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return checkKlingTaskStatus(taskId, token, attempts + 1);
             }
         } catch (error) {
+            console.error('Ошибка проверки статуса задачи:', error);
             throw new Error(`Ошибка проверки статуса: ${error.message}`);
         }
     }
@@ -396,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function readFileAsText(file) {
         return new Promise((resolve, reject) => {
             // Ограничение размера файла (5 МБ)
-            const MAX_SIZE = 5 * 1024 * 1024; // 5 МБ
+            const MAX_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
                 reject(new Error(`Файл слишком большой (${formatFileSize(file.size)}). Максимум 5 МБ`));
                 return;
@@ -428,6 +449,27 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.innerHTML = formattedContent;
         messagesDiv.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Добавление отладочного сообщения
+    function addDebugMessage(content, type = 'info') {
+        if (type === 'error') {
+            console.error(content);
+        } else {
+            console.log(content);
+        }
+        
+        const debugDiv = document.createElement('div');
+        debugDiv.classList.add('debug-message', type);
+        debugDiv.textContent = content;
+        document.body.appendChild(debugDiv);
+        
+        // Автоудаление через 10 секунд
+        setTimeout(() => {
+            if (document.body.contains(debugDiv)) {
+                document.body.removeChild(debugDiv);
+            }
+        }, 10000);
     }
     
     // Показать индикатор печати
