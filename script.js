@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showTypingIndicator();
         
         try {
-            const response = await fetch(DEEPSEEK_API_URL, {
+            const response = await fetchWithTimeout(DEEPSEEK_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     max_tokens: MAX_TOKENS,
                     stream: false
                 })
-            });
+            }, 60000); // Таймаут 60 секунд
             
             if (!response.ok) {
                 const errorData = await response.json();
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Генерация JWT токена
-            const token = generateKlingToken(accessKey, secretKey);
+            const token = await generateKlingToken(accessKey, secretKey);
             if (!token) throw new Error('Ошибка генерации токена');
             
             // Выводим токен для отладки
@@ -286,17 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 aspect_ratio: "1:1",
                 n: 1
             };
-
-            // Подробное логирование запроса
-            console.log('Отправка запроса на генерацию изображения:', {
-                url: KLING_API_URL,
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: payload
-            });
 
             const response = await fetchWithTimeout(KLING_API_URL, {
                 method: 'POST',
@@ -366,35 +355,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Генерация JWT токена для Kling
-    function generateKlingToken(accessKey, secretKey) {
+    // Генерация JWT токена для Kling (соответствует стандарту JWT)
+    async function generateKlingToken(accessKey, secretKey) {
         try {
-            // Заголовок JWT
+            // 1. Формируем заголовок
             const header = {
-                alg: 'HS256',
-                typ: 'JWT'
+                "alg": "HS256",
+                "typ": "JWT"
             };
             
-            // Время в секундах
+            // 2. Формируем полезную нагрузку
             const currentTime = Math.floor(Date.now() / 1000);
-            
-            // Полезная нагрузка
             const payload = {
-                iss: accessKey,
-                exp: currentTime + 1800, // 30 минут
-                nbf: currentTime - 5    // 5 секунд назад
+                "iss": accessKey,
+                "exp": currentTime + 1800, // 30 минут
+                "nbf": currentTime - 5    // 5 секунд назад
             };
             
-            // Кодирование в Base64
+            // 3. Кодируем компоненты в Base64URL
             const base64Header = base64UrlEncode(JSON.stringify(header));
             const base64Payload = base64UrlEncode(JSON.stringify(payload));
             
-            // Подпись
+            // 4. Создаем подпись для всей конструкции
             const signatureInput = `${base64Header}.${base64Payload}`;
-            const signature = createHmacSignature(signatureInput, secretKey);
+            const signature = await createHmacSignature(signatureInput, secretKey);
             
-            // Сборка полного токена
+            // 5. Собираем полный токен
             return `${signatureInput}.${signature}`;
+            
         } catch (e) {
             console.error('Ошибка генерации JWT токена:', e);
             addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
@@ -411,32 +399,45 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/=/g, '');
     }
     
-    // Создание HMAC подписи
-    function createHmacSignature(input, secret) {
-        const encoder = new TextEncoder();
-        const key = encoder.encode(secret);
-        const data = encoder.encode(input);
-        
-        // Используем Web Crypto API для создания подписи
-        return crypto.subtle.importKey(
-            'raw',
-            key,
-            { name: 'HMAC', hash: 'SHA-256' },
-            false,
-            ['sign']
-        )
-        .then(key => crypto.subtle.sign('HMAC', key, data))
-        .then(signature => {
-            const base64Signature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=/g, '');
-            return base64Signature;
-        })
-        .catch(error => {
+    // Создание HMAC подписи с использованием Web Crypto API
+    async function createHmacSignature(input, secret) {
+        try {
+            // Преобразуем входные данные в ArrayBuffer
+            const encoder = new TextEncoder();
+            const keyData = encoder.encode(secret);
+            const inputData = encoder.encode(input);
+            
+            // Импортируем ключ
+            const cryptoKey = await crypto.subtle.importKey(
+                'raw',
+                keyData,
+                { name: 'HMAC', hash: { name: 'SHA-256' } },
+                false,
+                ['sign']
+            );
+            
+            // Создаем подпись
+            const signature = await crypto.subtle.sign('HMAC', cryptoKey, inputData);
+            
+            // Конвертируем подпись в Base64URL
+            return arrayBufferToBase64Url(signature);
+            
+        } catch (error) {
             console.error('Ошибка создания подписи:', error);
             throw new Error('Ошибка создания подписи');
-        });
+        }
+    }
+    
+    // Конвертация ArrayBuffer в Base64URL
+    function arrayBufferToBase64Url(buffer) {
+        const byteArray = new Uint8Array(buffer);
+        let binary = '';
+        byteArray.forEach(byte => binary += String.fromCharCode(byte));
+        
+        return btoa(binary)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
     }
     
     // Проверка статуса задачи Kling
