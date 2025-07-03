@@ -274,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = generateKlingToken(accessKey, secretKey);
             if (!token) throw new Error('Ошибка генерации токена');
             
-            // Логирование токена для отладки
-            console.log('Generated JWT Token:', token);
+            // Выводим токен для отладки
+            console.log('Сгенерированный JWT токен:', token);
             addDebugMessage(`Сгенерированный токен: ${token}`, 'debug');
 
             const payload = {
@@ -327,34 +327,74 @@ document.addEventListener('DOMContentLoaded', () => {
     // Генерация JWT токена для Kling
     function generateKlingToken(accessKey, secretKey) {
         try {
-            // Проверка наличия необходимых библиотек
-            if (typeof jwt_encode !== 'function') {
-                throw new Error('JWT encode function not found');
-            }
-            
+            // Заголовок JWT
             const header = {
-                "alg": "HS256",
-                "typ": "JWT"
+                alg: 'HS256',
+                typ: 'JWT'
             };
             
-            const currentTime = Math.floor(Date.now() / 1000); // в секундах
-            const expirationTime = currentTime + 1800; // 30 минут
-            const notBefore = currentTime - 5; // 5 секунд назад
+            // Время в секундах
+            const currentTime = Math.floor(Date.now() / 1000);
             
+            // Полезная нагрузка
             const payload = {
-                "iss": accessKey,
-                "exp": expirationTime,
-                "nbf": notBefore
+                iss: accessKey,
+                exp: currentTime + 1800, // 30 минут
+                nbf: currentTime - 5    // 5 секунд назад
             };
             
-            // Генерация токена с правильным порядком параметров
-            const token = jwt_encode(payload, secretKey, header);
-            return token;
+            // Кодирование в Base64
+            const base64Header = base64UrlEncode(JSON.stringify(header));
+            const base64Payload = base64UrlEncode(JSON.stringify(payload));
+            
+            // Подпись
+            const signatureInput = `${base64Header}.${base64Payload}`;
+            const signature = createHmacSignature(signatureInput, secretKey);
+            
+            // Сборка полного токена
+            return `${signatureInput}.${signature}`;
         } catch (e) {
-            console.error('JWT generation error:', e);
+            console.error('Ошибка генерации JWT токена:', e);
             addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
             return null;
         }
+    }
+    
+    // Функция для кодирования в URL-safe Base64
+    function base64UrlEncode(str) {
+        const base64 = btoa(unescape(encodeURIComponent(str)));
+        return base64
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
+    }
+    
+    // Создание HMAC подписи
+    function createHmacSignature(input, secret) {
+        const encoder = new TextEncoder();
+        const key = encoder.encode(secret);
+        const data = encoder.encode(input);
+        
+        // Используем Web Crypto API для создания подписи
+        return crypto.subtle.importKey(
+            'raw',
+            key,
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+        )
+        .then(key => crypto.subtle.sign('HMAC', key, data))
+        .then(signature => {
+            const base64Signature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+            return base64Signature;
+        })
+        .catch(error => {
+            console.error('Ошибка создания подписи:', error);
+            throw new Error('Ошибка создания подписи');
+        });
     }
     
     // Проверка статуса задачи Kling
