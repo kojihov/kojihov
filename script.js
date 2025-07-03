@@ -287,18 +287,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 n: 1
             };
 
-            const response = await fetch(KLING_API_URL, {
+            // Подробное логирование запроса
+            console.log('Отправка запроса на генерацию изображения:', {
+                url: KLING_API_URL,
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: payload
+            });
+
+            const response = await fetchWithTimeout(KLING_API_URL, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
-            });
+            }, 30000); // Таймаут 30 секунд
 
+            // Обработка HTTP ошибок
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Ошибка API');
+                let errorText = 'Неизвестная ошибка';
+                try {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
+                } catch (e) {
+                    errorText = await response.text();
+                }
+                throw new Error(`Ошибка API [${response.status}]: ${errorText}`);
             }
 
             const data = await response.json();
@@ -307,7 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const taskId = data.data.task_id;
+            console.log('Задача создана, ID:', taskId);
+            
             const imageUrl = await checkKlingTaskStatus(taskId, token);
+            console.log('Изображение сгенерировано:', imageUrl);
 
             if (imageUrl) {
                 addImageToChat(imageUrl, prompt);
@@ -321,6 +342,27 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('Ошибка генерации ❌', 'error');
         } finally {
             removeTypingIndicator();
+        }
+    }
+    
+    // Fetch с таймаутом
+    async function fetchWithTimeout(url, options, timeout) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error(`Таймаут запроса (${timeout} мс)`);
+            }
+            throw error;
         }
     }
     
@@ -409,9 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
         await new Promise(resolve => setTimeout(resolve, 5000));
         
         try {
-            const response = await fetch(`${KLING_API_URL}/${taskId}`, {
+            console.log(`Проверка статуса задачи ${taskId} (попытка ${attempts + 1})`);
+            
+            const response = await fetchWithTimeout(`${KLING_API_URL}/${taskId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
-            });
+            }, 10000); // Таймаут 10 секунд
             
             if (!response.ok) {
                 const errorText = await response.text();
@@ -422,6 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.code !== 0) {
                 throw new Error(data.message || 'Ошибка статуса задачи');
             }
+            
+            console.log('Статус задачи:', data.data.task_status);
             
             switch (data.data.task_status) {
                 case 'succeed':
