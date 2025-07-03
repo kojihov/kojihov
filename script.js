@@ -357,38 +357,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Генерация JWT токена для Kling (соответствует стандарту JWT)
     async function generateKlingToken(accessKey, secretKey) {
-        try {
-            // 1. Формируем заголовок
-            const header = {
-                "alg": "HS256",
-                "typ": "JWT"
-            };
-            
-            // 2. Формируем полезную нагрузку
-            const currentTime = Math.floor(Date.now() / 1000);
-            const payload = {
-                "iss": accessKey,
-                "exp": currentTime + 1800, // 30 минут
-                "nbf": currentTime - 5    // 5 секунд назад
-            };
-            
-            // 3. Кодируем компоненты в Base64URL
-            const base64Header = base64UrlEncode(JSON.stringify(header));
-            const base64Payload = base64UrlEncode(JSON.stringify(payload));
-            
-            // 4. Создаем подпись для всей конструкции
-            const signatureInput = `${base64Header}.${base64Payload}`;
-            const signature = await createHmacSignature(signatureInput, secretKey);
-            
-            // 5. Собираем полный токен
-            return `${signatureInput}.${signature}`;
-            
-        } catch (e) {
-            console.error('Ошибка генерации JWT токена:', e);
-            addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
-            return null;
-        }
+    try {
+        const currentTime = Math.floor(Date.now() / 1000);
+        const payload = {
+            "iss": accessKey,
+            "exp": currentTime + 1800,
+            "nbf": currentTime - 5
+        };
+        
+        // Генерация токена с помощью библиотеки
+        return jwt_encode(payload, secretKey, { algorithm: 'HS256' });
+        
+    } catch (e) {
+        console.error('Ошибка генерации JWT токена:', e);
+        addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
+        return null;
     }
+}
     
     // Функция для кодирования в URL-safe Base64
     function base64UrlEncode(str) {
