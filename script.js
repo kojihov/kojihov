@@ -1,126 +1,160 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://api.deepseek.com/v1/chat/completions';
+    // Константы API
+    const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+    const KLING_API_URL = "https://api-singapore.klingai.com/v1/images/generations";
     const DEFAULT_MODEL = 'deepseek-reasoner';
     const MAX_TOKENS = 32768;
     
-    // Исправленный базовый промпт с экранированными символами
-    const BASE_PROMPT = `**Ты — Growth Architect & Senior Tech Lead.** Объединяешь экспертизу в маркетинге (Продажи, Обучение, Копирайтинг, Тех->Маркетинг) и технологиях (Архитектура ПО, Программирование, Кодинг). **Давай применимые на практике решения** с фокусом на измеримую пользу.
+    // Базовый промпт для DeepSeek
+    const BASE_PROMPT = `**Ты — Growth Architect (Senior Level).** Твоя роль — давать **применимые на практике решения** в 4 областях: Продажи, Обучение, Копирайтинг, Тех->Маркетинг.  
+**Стиль ответа — четкий, выгодно-ориентированный, с умеренной детализацией:**
 
-### 🔧 УЛУЧШЕНИЯ СТРУКТУРЫ
-1. **Роли интегрированы в workflow**:
-   - \`[Архитектор]\` → Системное проектирование, выбор технологий
-   - \`[Программист]\` → Алгоритмы, паттерны, оптимизация
-   - \`[Кодер]\` → Реализация кода, рефакторинг, дебаггинг
-2. **Гибридные ответы**:
-   \`[Копирайтинг + Программист] → Генератор SEO-текстов на Python\`
-3. **Тех-блоки**:
-   - Добавлены шаблоны для кода/архитектуры
-   - Четкое разделение бизнес-логики и реализации
+**✅ КАК ФОРМАТИРОВАТЬ ОТВЕТ:**
+1.  **Заголовок:** \`[Дисциплина] → [Суть задачи]\` (Пример: \`[Продажи] → Скрипт для холодного охвата B2B\`).
+2.  **Структура блока (по необходимости):**
+    *   **Задача:** Суть проблемы/запроса (1-2 предложения).
+    *   **Стратегия:** Ключевой подход (фокус на **выгоде** или **механике решения**).
+    *   **Конкретные шаги (MVP):** Что сделать *прямо сейчас* (─, •). **Тех. характеристики — только если критичны для выгоды.**
+    *   **KPI/Оценка:** Как измерить результат (цифры > мнения). Если цифр нет — скажи, *где их взять*.
+3.  **Инструменты:** Маркированные списки (─, •), **жирный текст для терминов/выгод**, таблицы для сравнения (>3 пунктов), эмодзи (🚀/💡/⚠️) — умеренно.
 
-### ✅ ФОРМАТ ОТВЕТА (ОБНОВЛЁННЫЙ)
-**Заголовок:** \`[Дисциплина]→[Роль]→[Задача]\`  
-Пример: \`[Тех->Маркетинг]→[Архитектор]→Оптимизация контент-пайплайна\`
+**✅ КАК РАБОТАТЬ С КОНТЕНТОМ:**
+*   **Главное — Польза Клиента:** Всегда переводи технические характеристики в **ощутимую выгоду** (Пример: "Аккумулятор 5000mAh" → "**Работает без подзарядки 2 дня** ⚡").
+*   **Данные > Теория:** Давай измеримые инсайты. Нет данных? Укажи источник для их получения (e.g., "Замеряй конверсию в CRM за 2 недели").
+*   **MVP Принцип:** "Сначала сделай **ЭТО** (самое важное), потом — то".
+*   **Язык:** Профессиональный, но живой. Без воды и канцелярита. Точно. Практично.
 
-**Структура (адаптивная):**
-1. **Задача** (1 предложение): Суть проблемы
-2. **Стратегия** (2-3 пункта):  
-   ─ *Бизнес-выгода* → "Увеличит конверсию на X%"  
-   ─ *Тех-подход* → "Используем шаблон Strategy для..."
-3. **Реализация (MVP):**
-   \`\`\`javascript
-   // [Кодер] Пример кода (с комментариями!)
-   function seoOptimize(text) {
-     return applyLSI(keywords); // [Программист] O(n) сложность
-   }
-   \`\`\`
-   - Для архитектуры: диаграмма компонентов \`[Client]→[API]→[DB]\`
-4. **KPI** (с источниками данных):
-   | Метрика       | Инструмент     | Цель  |
-   |---------------|----------------|-------|
-   | Скорость рендеринга | Lighthouse | ≤1.5s |
+**✅ КАК РАСПОЗНАВАТЬ ЗАДАЧУ (Авто-режимы):**
+*   **\`[Обучение]\`:** "Напиши тренинг...", "Как научить менеджеров...".  
+    *→ Действуй:* Разбей тему на **навыки → Практика (ролевка, чек-лист) → Метрика успеха → Экзамен (1 ошибка = провал)**.
+*   **\`[Копирайтинг/SEO]\`:** "Оптимизируй текст...", "Напиши продающий пост...".  
+    *→ Действуй:* Тип запроса (коммерч./инфо) → Внедри **ключи (H1-H3), LSI, микроформаты → Чек-лист (плотность ключей 1-2%, УТП вначале, CTA)**.
+*   **\`[Продажи]\`:** "Повысь конверсию...", "Дай скрипт для...".  
+    *→ Действуй:* Аудит воронки → **Скрипты (фокус на снятии возражений) → KPI менеджеров → Инструменты контроля**.
+*   **\`[Тех->Маркетинг]\`:** "Переведи техописание...", "Сделай описание выгодным...".  
+    *→ Действуй:* Выдели тех.хар-ки → Преврати в **пользу → Добавь SEO-ключи (аудиозапросы, ошибки) → Формат: \`[Характеристика] → [Польза] → [Ключи]\`**.
+*   **Гибрид?** Комбинируй блоки (e.g., \`[Обучение + Копирайтинг] → Скрипты UGC-отзывов\`).
 
-### 🚀 АВТО-РЕЖИМЫ (ДОБАВЛЕНЫ ТЕХ-РОЛИ)
-**\`[Программирование]\`** запросы ("Напиши скрипт...", "Оптимизируй алгоритм..."):  
-→ *Действуй:*  
-1. [Архитектор] → Выбор стека (обоснование)  
-2. [Программист] → Псевдокод/схема  
-3. [Кодер] → Рабочий код с обработкой edge-cases  
-
-**\`[Архитектура]\`** задачи ("Спроектируй микросервис..."):  
-→ *Действуй:*  
-┌─ Компоненты → Сервис A (Go), Сервис B (Python)  
-├─ Data Flow → RabbitMQ для асинхронности  
-└─ Scaling → Kubernetes + HPA  
-
-**\`[Гибрид]\`** пример ("Создай CRM для отдела продаж"):  
-→ Комбинируй:  
-- [Продажи] → Воронка сделок  
-- [Программист] → Схема БД  
-- [Кодер] → API эндпоинты  
-
-### ⚠️ КРИТИЧЕСКИЕ ПРАВИЛА
-**✅ Обязательно:**  
-- Для кода полный листинг кода, готовый для компилятора, без сокращений  
-- Тех-характеристики → **Выгода** ("Кеширование Redis → снизит latency на 70%")  
-- В архитектурных решениях: графическое сопровождение архитектуры  
-
-**❌ Запрещено:**  
-- Общие советы без привязки к стеку ("Используйте базу данных")  
-- Код без пояснения логики  
-- "Можно так сделать" → давай 2 варианта с плюсами/минусами  
-
-### 🧠 КОГНИТИВНАЯ МОДЕЛЬ
-1. Сначала **польза для бизнеса**, потом тех-реализация  
-2. В коде: читаемость > преждевременная оптимизация  
-3. Для обучения: практика с интерактивными примерами кода`;
+**❌ ЗАПРЕЩЕНО БЕЗ ИСКЛЮЧЕНИЙ:**
+*   Общие советы без конкретики ("Улучшите коммуникацию", "Создайте воронку").
+*   Теория без практического применения *прямо сейчас*.
+*   "Это зависит..." *без минимум 2 вариантов действий под разные условия*.
+*   Вода: длинные вступления, очевидные утверждения, "красивости" без пользы.`;
     
+    // Элементы интерфейса
     const chatContainer = document.getElementById('chat-container');
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const apiKeyInput = document.getElementById('api-key');
-    const saveKeyBtn = document.getElementById('save-key');
+    const klingAccessKeyInput = document.getElementById('kling-access-key');
+    const klingSecretKeyInput = document.getElementById('kling-secret-key');
+    const saveKeysBtn = document.getElementById('save-keys');
     const clearBtn = document.getElementById('clear-btn');
     const exportBtn = document.getElementById('export-btn');
     const statusDiv = document.getElementById('status');
+    const modeToggleBtn = document.getElementById('mode-toggle');
+    const fileUpload = document.getElementById('file-upload');
+    const fileList = document.getElementById('file-list');
+    const fileUploadContainer = document.getElementById('file-upload-container');
     
-    // Массив для хранения истории сообщений
+    // Переменные состояния
     let chatHistory = [
         {
             role: "system",
             content: BASE_PROMPT
         }
     ];
+    let currentMode = 'chat'; // 'chat' или 'image'
+    let uploadedFiles = [];
     
-    // Загрузка сохраненного API ключа
-    const savedApiKey = localStorage.getItem('deepseekApiKey');
-    if (savedApiKey) {
-        apiKeyInput.value = savedApiKey;
-    }
+    // Загрузка сохраненных ключей
+    const savedDeepseekKey = localStorage.getItem('deepseekApiKey');
+    const savedKlingAccessKey = localStorage.getItem('klingAccessKey');
+    const savedKlingSecretKey = localStorage.getItem('klingSecretKey');
     
-    // Сохранение API ключа
-    saveKeyBtn.addEventListener('click', () => {
-        const key = apiKeyInput.value.trim();
-        if (key) {
-            localStorage.setItem('deepseekApiKey', key);
-            showStatus('Ключ сохранен! ✅', 'success');
-        } else {
-            showStatus('Введите API ключ', 'error');
-        }
+    if (savedDeepseekKey) apiKeyInput.value = savedDeepseekKey;
+    if (savedKlingAccessKey) klingAccessKeyInput.value = savedKlingAccessKey;
+    if (savedKlingSecretKey) klingSecretKeyInput.value = savedKlingSecretKey;
+    
+    // Сохранение всех ключей
+    saveKeysBtn.addEventListener('click', () => {
+        const deepseekKey = apiKeyInput.value.trim();
+        const klingAccessKey = klingAccessKeyInput.value.trim();
+        const klingSecretKey = klingSecretKeyInput.value.trim();
+        
+        if (deepseekKey) localStorage.setItem('deepseekApiKey', deepseekKey);
+        if (klingAccessKey) localStorage.setItem('klingAccessKey', klingAccessKey);
+        if (klingSecretKey) localStorage.setItem('klingSecretKey', klingSecretKey);
+        
+        showStatus('Ключи сохранены! ✅', 'success');
     });
     
-    // Отправка сообщения
+    // Переключение режимов
+    modeToggleBtn.addEventListener('click', () => {
+        currentMode = currentMode === 'chat' ? 'image' : 'chat';
+        modeToggleBtn.textContent = `Режим: ${currentMode === 'chat' ? 'Чат' : 'Генерация изображений'}`;
+        fileUploadContainer.classList.toggle('hidden', currentMode === 'image');
+        userInput.placeholder = currentMode === 'chat' 
+            ? "Введите сообщение (Shift+Enter для переноса, Enter для отправки)..." 
+            : "Опишите изображение для генерации...";
+    });
+    
+    // Обработка загрузки файлов
+    fileUpload.addEventListener('change', (e) => {
+        fileList.innerHTML = '';
+        uploadedFiles = Array.from(e.target.files);
+        
+        uploadedFiles.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <span>${file.name} (${formatFileSize(file.size)})</span>
+                <button class="remove-file" data-name="${file.name}">×</button>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        
+        // Обработка удаления файлов
+        document.querySelectorAll('.remove-file').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const fileName = btn.dataset.name;
+                uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+                fileList.removeChild(btn.parentElement);
+            });
+        });
+    });
+    
+    // Форматирование размера файла
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Отправка сообщения/генерация изображения
     async function sendMessage() {
+        if (currentMode === 'image') {
+            await generateImage();
+        } else {
+            await sendChatMessage();
+        }
+    }
+    
+    // Отправка сообщения в чате с файлами
+    async function sendChatMessage() {
         const message = userInput.value.trim();
         const apiKey = localStorage.getItem('deepseekApiKey');
         
-        if (!message) {
-            showStatus('Введите сообщение', 'warning');
+        if (!message && uploadedFiles.length === 0) {
+            showStatus('Введите сообщение или загрузите файл', 'warning');
             return;
         }
         
         if (!apiKey) {
-            showStatus('Введите и сохраните API ключ! 🔑', 'error');
+            showStatus('Введите и сохраните DeepSeek API ключ! 🔑', 'error');
             return;
         }
         
@@ -128,19 +162,41 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(message, 'user');
         userInput.value = '';
         
+        // Добавляем файлы к сообщению
+        let fullMessage = message;
+        if (uploadedFiles.length > 0) {
+            try {
+                const fileContents = await Promise.all(
+                    uploadedFiles.map(file => readFileAsText(file))
+                );
+                
+                const filesInfo = fileContents.map((content, i) => 
+                    `\n\n[Файл ${i+1}: ${uploadedFiles[i].name}]\n${content}`
+                ).join('\n\n');
+                
+                fullMessage = `${filesInfo}\n\n${message}`;
+                
+                // Очищаем загруженные файлы
+                uploadedFiles = [];
+                fileList.innerHTML = '';
+                fileUpload.value = '';
+            } catch (error) {
+                addMessage(`⚠️ **Ошибка чтения файлов**\n${error.message}`, 'bot');
+                return;
+            }
+        }
+        
         // Добавляем сообщение в историю
         chatHistory.push({
             role: "user",
-            content: message
+            content: fullMessage
         });
         
         showStatus('Генерация ответа... ⏳', 'processing');
-        
-        // Показать индикатор печати
         showTypingIndicator();
         
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(DEEPSEEK_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -173,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(botResponse, 'bot');
             showStatus('Готов к работе ✅', 'ready');
             
-            // Подсветка кода (требует подключения highlight.js)
+            // Подсветка кода
             if (typeof hljs !== 'undefined') {
                 setTimeout(() => {
                     document.querySelectorAll('pre code').forEach(block => {
@@ -188,6 +244,169 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(`⚠️ **Ошибка запроса**\n${error.message}`, 'bot');
             showStatus('Ошибка запроса ❌', 'error');
         }
+    }
+    
+    // Генерация изображения
+    async function generateImage() {
+        const prompt = userInput.value.trim();
+        const accessKey = localStorage.getItem('klingAccessKey');
+        const secretKey = localStorage.getItem('klingSecretKey');
+        
+        if (!accessKey || !secretKey) {
+            showStatus('Введите ключи Kling AI! 🔑', 'error');
+            return;
+        }
+        
+        if (!prompt) {
+            showStatus('Введите описание изображения', 'warning');
+            return;
+        }
+
+        // Добавляем сообщение пользователя
+        addMessage(`🎨 **Запрос на генерацию изображения:**\n${prompt}`, 'user');
+        userInput.value = '';
+        
+        showStatus('Генерация изображения... 🎨', 'processing');
+        showTypingIndicator();
+
+        try {
+            // Генерация JWT токена
+            const token = generateKlingToken(accessKey, secretKey);
+            if (!token) throw new Error('Ошибка генерации токена');
+
+            const payload = {
+                model_name: "kling-v2",
+                prompt: prompt,
+                negative_prompt: "ugly, deformed, blurry, watermark, text",
+                resolution: "1k",
+                aspect_ratio: "1:1",
+                n: 1
+            };
+
+            const response = await fetch(KLING_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Ошибка API');
+            }
+
+            const data = await response.json();
+            if (data.code !== 0) {
+                throw new Error(data.message || 'Ошибка генерации');
+            }
+            
+            const taskId = data.data.task_id;
+            const imageUrl = await checkKlingTaskStatus(taskId, token);
+
+            if (imageUrl) {
+                addImageToChat(imageUrl, prompt);
+                showStatus('Изображение готово! ✅', 'success');
+            } else {
+                throw new Error('Не удалось получить изображение');
+            }
+        } catch (error) {
+            addMessage(`⚠️ **Ошибка генерации**\n${error.message}`, 'bot');
+            showStatus('Ошибка генерации ❌', 'error');
+        } finally {
+            removeTypingIndicator();
+        }
+    }
+    
+    // Генерация JWT токена для Kling
+    function generateKlingToken(accessKey, secretKey) {
+        try {
+            const header = { alg: 'HS256', typ: 'JWT' };
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            const payload = {
+                iss: accessKey,
+                exp: currentTime + 1800,
+                nbf: currentTime - 5
+            };
+            
+            return jwt_encode(payload, secretKey, header);
+        } catch (e) {
+            console.error('JWT generation error:', e);
+            return null;
+        }
+    }
+    
+    // Проверка статуса задачи Kling
+    async function checkKlingTaskStatus(taskId, token, attempts = 0) {
+        if (attempts >= 30) {
+            throw new Error('Превышено время ожидания генерации');
+        }
+        
+        // Обновляем статус каждые 5 секунд
+        statusDiv.textContent = `Генерация изображения... (${attempts * 5} сек)`;
+        
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        try {
+            const response = await fetch(`${KLING_API_URL}/${taskId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data.code !== 0) {
+                throw new Error(data.message || 'Ошибка статуса задачи');
+            }
+            
+            switch (data.data.task_status) {
+                case 'succeed':
+                    return data.data.task_result.images[0].url;
+                case 'failed':
+                    throw new Error(data.data.task_status_msg || 'Ошибка генерации');
+                default:
+                    return checkKlingTaskStatus(taskId, token, attempts + 1);
+            }
+        } catch (error) {
+            throw new Error(`Ошибка проверки статуса: ${error.message}`);
+        }
+    }
+    
+    // Добавление изображения в чат
+    function addImageToChat(url, prompt) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'bot-message');
+        messageDiv.innerHTML = `
+            <div class="header-block">
+                <span class="header-emoji">🎨</span>
+                <strong>Сгенерировано изображение</strong>
+            </div>
+            <img src="${url}" alt="${prompt}" class="generated-image">
+            <p><em>Описание:</em> ${prompt}</p>
+        `;
+        messagesDiv.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Чтение файла как текст
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            // Ограничение размера файла (5 МБ)
+            const MAX_SIZE = 5 * 1024 * 1024; // 5 МБ
+            if (file.size > MAX_SIZE) {
+                reject(new Error(`Файл слишком большой (${formatFileSize(file.size)}). Максимум 5 МБ`));
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+            reader.readAsText(file);
+        });
     }
     
     // Добавление сообщения в чат
@@ -256,7 +475,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatContent = Array.from(messagesDiv.querySelectorAll('.message'))
             .map(msg => {
                 const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ассистент';
-                return `${sender}: ${msg.textContent}`;
+                const textContent = msg.textContent;
+                
+                // Обработка изображений
+                const images = msg.querySelectorAll('.generated-image');
+                let imageText = '';
+                if (images.length > 0) {
+                    imageText = '\n[Изображение]: ' + Array.from(images)
+                        .map(img => img.src)
+                        .join('\n');
+                }
+                
+                return `${sender}: ${textContent}${imageText}`;
             })
             .join('\n\n');
         
@@ -278,6 +508,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function showStatus(text, type) {
         statusDiv.textContent = text;
         statusDiv.className = 'status';
+        
+        // Очищаем предыдущие классы статуса
+        statusDiv.classList.remove(
+            'status-success', 
+            'status-error', 
+            'status-warning', 
+            'status-processing', 
+            'status-ready'
+        );
         
         switch (type) {
             case 'success':
