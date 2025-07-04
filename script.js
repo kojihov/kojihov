@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Проверка доступности библиотеки JWT
+    console.log('jwtEncode available:', typeof jwtEncode);
+    
     // Константы API
     const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
     const KLING_API_URL = "https://api-singapore.klingai.com/v1/images/generations";
@@ -357,72 +360,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Генерация JWT токена для Kling (соответствует стандарту JWT)
     async function generateKlingToken(accessKey, secretKey) {
-    try {
-        const currentTime = Math.floor(Date.now() / 1000);
-        const payload = {
-            "iss": accessKey,
-            "exp": currentTime + 1800,
-            "nbf": currentTime - 5
-        };
-        
-        // Используем правильное имя функции
-        return jwtEncode(payload, secretKey, { algorithm: 'HS256' });
-        
-    } catch (e) {
-        console.error('Ошибка генерации JWT токена:', e);
-        addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
-        return null;
-    }
-}
-    
-    // Функция для кодирования в URL-safe Base64
-    function base64UrlEncode(str) {
-        const base64 = btoa(unescape(encodeURIComponent(str)));
-        return base64
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
-    }
-    
-    // Создание HMAC подписи с использованием Web Crypto API
-    async function createHmacSignature(input, secret) {
         try {
-            // Преобразуем входные данные в ArrayBuffer
-            const encoder = new TextEncoder();
-            const keyData = encoder.encode(secret);
-            const inputData = encoder.encode(input);
+            const currentTime = Math.floor(Date.now() / 1000);
+            const payload = {
+                "iss": accessKey,
+                "exp": currentTime + 1800,
+                "nbf": currentTime - 5
+            };
             
-            // Импортируем ключ
-            const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyData,
-                { name: 'HMAC', hash: { name: 'SHA-256' } },
-                false,
-                ['sign']
-            );
+            // Исправлено: используем правильное имя функции
+            if (typeof jwtEncode === 'function') {
+                return jwtEncode(payload, secretKey, { algorithm: 'HS256' });
+            } else {
+                throw new Error('Функция jwtEncode недоступна');
+            }
             
-            // Создаем подпись
-            const signature = await crypto.subtle.sign('HMAC', cryptoKey, inputData);
-            
-            // Конвертируем подпись в Base64URL
-            return arrayBufferToBase64Url(signature);
-            
-        } catch (error) {
-            console.error('Ошибка создания подписи:', error);
-            throw new Error('Ошибка создания подписи');
+        } catch (e) {
+            console.error('Ошибка генерации JWT токена:', e);
+            addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
+            return null;
         }
-    }
-    
-    // Конвертация ArrayBuffer в Base64URL
-    function arrayBufferToBase64Url(buffer) {
-        const byteArray = new Uint8Array(buffer);
-        let binary = '';
-        byteArray.forEach(byte => binary += String.fromCharCode(byte));
-        
-        return btoa(binary)
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
     }
     
     // Проверка статуса задачи Kling
