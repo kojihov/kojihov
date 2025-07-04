@@ -365,8 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
             "nbf": currentTime - 5
         };
         
-        // Генерация токена с помощью библиотеки
-        return jwt_encode(payload, secretKey, { algorithm: 'HS256' });
+        // Используем правильное имя функции
+        return jwtEncode(payload, secretKey, { algorithm: 'HS256' });
         
     } catch (e) {
         console.error('Ошибка генерации JWT токена:', e);
