@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const klingAccessKeyInput = document.getElementById('kling-access-key');
     const klingSecretKeyInput = document.getElementById('kling-secret-key');
     const saveKeysBtn = document.getElementById('save-keys');
+    const checkKeysBtn = document.getElementById('check-keys');
     const clearBtn = document.getElementById('clear-btn');
     const exportBtn = document.getElementById('export-btn');
     const statusDiv = document.getElementById('status');
@@ -66,6 +67,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (klingSecretKey) localStorage.setItem('klingSecretKey', klingSecretKey);
         
         showStatus('Ключи сохранены! ✅');
+    });
+    
+    // Проверка ключей
+    checkKeysBtn.addEventListener('click', async () => {
+        const deepseekKey = apiKeyInput.value.trim();
+        const klingAccessKey = klingAccessKeyInput.value.trim();
+        const klingSecretKey = klingSecretKeyInput.value.trim();
+        
+        if (!deepseekKey && !klingAccessKey && !klingSecretKey) {
+            showStatus('Введите ключи для проверки');
+            return;
+        }
+        
+        showStatus('Проверка ключей... 🔍');
+        
+        try {
+            if (deepseekKey) {
+                const testResponse = await fetch(DEEPSEEK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${deepseekKey}`
+                    },
+                    body: JSON.stringify({
+                        model: DEFAULT_MODEL,
+                        messages: [{role: "user", content: "test"}],
+                        max_tokens: 5,
+                        stream: false
+                    })
+                });
+                
+                if (!testResponse.ok) {
+                    throw new Error('DeepSeek ключ недействителен');
+                }
+            }
+            
+            if (klingAccessKey && klingSecretKey) {
+                const token = await generateKlingToken(klingAccessKey, klingSecretKey);
+                if (!token) {
+                    throw new Error('Kling ключи недействительны');
+                }
+            }
+            
+            showStatus('Все ключи действительны! ✅');
+        } catch (error) {
+            showStatus('Ошибка проверки ключей ❌');
+            addMessage(`⚠️ **Ошибка проверки ключей**\n${error.message}`, 'bot');
+        }
     });
     
     // Переключение режимов
@@ -110,6 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Генерация UUID для запросов
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
     
     // Отправка сообщения/генерация изображения
@@ -255,17 +313,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
                 model_name: "kling-v2",
                 prompt: prompt,
-                negative_prompt: "ugly, deformed, blurry, watermark, text",
-                resolution: "2k",
+                negative_prompt: "nsfw, low quality, bad anatomy, text, watermark",
+                resolution: "1024_1024",
                 aspect_ratio: "1:1",
-                n: 2
+                n: 1,
+                guidance_scale: 7.5,
+                sampler: "euler_a",
+                seed: Math.floor(Math.random() * 1000000),
+                steps: 30
             };
 
             const response = await fetchWithTimeout(KLING_API_URL, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Request-ID': generateUUID()
                 },
                 body: JSON.stringify(payload)
             }, 120000);
@@ -293,7 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Ошибка генерации изображения:', error);
             let errorMessage = `⚠️ **Ошибка генерации**\n${error.message}`;
             
-            if (error.message.includes('Failed to fetch')) {
+            if (error.message.includes('risk control')) {
+                errorMessage = '⚠️ **Ошибка безопасности**\n1. Проверьте ключи\n2. Измените запрос\n3. Попробуйте позже';
+            } else if (error.message.includes('Failed to fetch')) {
                 errorMessage = '⚠️ **Сетевая ошибка**\nПроверьте подключение к интернету и VPN';
             }
             
@@ -310,13 +375,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentTime = Math.floor(Date.now() / 1000);
             const header = { 
                 "alg": "HS256", 
-                "typ": "JWT" 
+                "typ": "JWT",
+                "kid": accessKey
             };
             
             const payload = {
                 "iss": accessKey,
                 "exp": currentTime + 1800,
-                "nbf": currentTime - 5
+                "nbf": currentTime - 5,
+                "iat": currentTime
             };
             
             // Кодирование заголовка и payload

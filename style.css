@@ -7,6 +7,8 @@
     --code-bg: #f8f8f8;
     --code-border: #e0e0e0;
     --error-color: #d32f2f;
+    --warning-color: #ff9800;
+    --success-color: #4caf50;
 }
 
 * {
@@ -39,14 +41,21 @@ header {
     margin-bottom: 20px;
 }
 
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--dark);
+}
+
 .api-key-container {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
     margin-top: 15px;
 }
 
 input[type="password"] {
+    width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -56,17 +65,19 @@ input[type="password"] {
 button {
     cursor: pointer;
     transition: all 0.3s;
+    font-weight: 500;
 }
 
-#save-keys {
+#save-keys, #check-keys {
     background-color: var(--primary);
     color: white;
     border: none;
     padding: 10px 15px;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
-#save-keys:hover {
+#save-keys:hover, #check-keys:hover {
     background-color: #5a5ac0;
 }
 
@@ -81,6 +92,7 @@ button {
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
+    font-size: 16px;
 }
 
 #mode-toggle:hover {
@@ -174,6 +186,7 @@ code {
     border-radius: 4px;
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
 .file-upload-label:hover {
@@ -188,6 +201,7 @@ code {
     background: #f8f8f8;
     border-radius: 4px;
     margin-top: 5px;
+    font-size: 14px;
 }
 
 .remove-file {
@@ -231,10 +245,28 @@ code {
     border: 1px solid #ddd;
 }
 
+.security-warning {
+    color: var(--warning-color);
+    background-color: #fff8e1;
+    border-left: 4px solid var(--warning-color);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 0 4px 4px 0;
+}
+
 .error-message {
     color: var(--error-color);
     background-color: #ffebee;
     border-left: 4px solid var(--error-color);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 0 4px 4px 0;
+}
+
+.success-message {
+    color: var(--success-color);
+    background-color: #e8f5e9;
+    border-left: 4px solid var(--success-color);
     padding: 10px;
     margin: 5px 0;
     border-radius: 0 4px 4px 0;
