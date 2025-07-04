@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 model_name: "kling-v2",
                 prompt: prompt,
                 negative_prompt: "nsfw, low quality, bad anatomy, text, watermark",
-                resolution: "1024_1024",
+                resolution: "2k",
                 aspect_ratio: "1:1",
                 n: 1,
                 guidance_scale: 7.5,
