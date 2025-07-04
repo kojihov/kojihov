@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 model_name: "kling-v2",
                 prompt: prompt,
                 negative_prompt: "ugly, deformed, blurry, watermark, text",
-                resolution: "1024_1024",
+                resolution: "2k",
                 aspect_ratio: "1:1",
                 n: 2
             };
