@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     let currentMode = 'chat'; // 'chat' или 'image'
     let uploadedFiles = [];
+    let taskCheckInterval = null;
     
     // Загрузка сохраненных ключей
     const savedDeepseekKey = localStorage.getItem('deepseekApiKey');
@@ -314,9 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const taskId = data.data.task_id;
             console.log('Задача создана, ID:', taskId);
             
+            // Запускаем проверку статуса задачи
             const imageUrl = await checkKlingTaskStatus(taskId, token);
-            console.log('Изображение сгенерировано:', imageUrl);
-
+            
             if (imageUrl) {
                 addImageToChat(imageUrl, prompt);
                 showStatus('Изображение готово! ✅');
@@ -372,30 +373,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const encoder = new TextEncoder();
             const encodedHeader = base64UrlEncode(JSON.stringify(header));
             const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-            const data = `${encodedHeader}.${encodedPayload}`;
+            const unsignedToken = `${encodedHeader}.${encodedPayload}`;
             
             // Создание подписи
-            const keyData = encoder.encode(secretKey);
             const key = await crypto.subtle.importKey(
-                'raw',
-                keyData,
-                { name: 'HMAC', hash: 'SHA-256' },
+                "raw",
+                encoder.encode(secretKey),
+                { name: "HMAC", hash: "SHA-256" },
                 false,
-                ['sign']
+                ["sign"]
             );
             
             const signature = await crypto.subtle.sign(
-                'HMAC', 
-                key, 
-                encoder.encode(data)
+                "HMAC",
+                key,
+                encoder.encode(unsignedToken)
             );
             
-            // Кодирование подписи
+            // Конвертация подписи в base64url
             const signatureArray = Array.from(new Uint8Array(signature));
             const signatureString = String.fromCharCode(...signatureArray);
             const encodedSignature = base64UrlEncode(signatureString);
             
-            return `${data}.${encodedSignature}`;
+            return `${unsignedToken}.${encodedSignature}`;
             
         } catch (e) {
             console.error('Ошибка генерации JWT токена:', e);
@@ -412,48 +412,51 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/=/g, '');
     }
     
-    // Проверка статуса задачи Kling
-    async function checkKlingTaskStatus(taskId, token, attempts = 0) {
-        if (attempts >= 30) {
-            throw new Error('Превышено время ожидания генерации');
-        }
-        
-        // Обновляем статус
-        statusDiv.textContent = `Генерация изображения... (${attempts * 5} сек)`;
-        
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        try {
-            console.log(`Проверка статуса задачи ${taskId} (попытка ${attempts + 1})`);
+    // Проверка статуса задачи Kling (с интервалами)
+    async function checkKlingTaskStatus(taskId, token) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 30;
+            const interval = 5000; // 5 секунд
             
-            const response = await fetchWithTimeout(`${KLING_API_URL}/${taskId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }, 10000); // Таймаут 10 секунд
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error: ${response.status} - ${errorText}`);
-            }
-            
-            const data = await response.json();
-            if (data.code !== 0) {
-                throw new Error(data.message || 'Ошибка статуса задачи');
-            }
-            
-            console.log('Статус задачи:', data.data.task_status);
-            
-            switch (data.data.task_status) {
-                case 'succeed':
-                    return data.data.task_result.images[0].url;
-                case 'failed':
-                    throw new Error(data.data.task_status_msg || 'Ошибка генерации');
-                default:
-                    return checkKlingTaskStatus(taskId, token, attempts + 1);
-            }
-        } catch (error) {
-            console.error('Ошибка проверки статуса задачи:', error);
-            throw new Error(`Ошибка проверки статуса: ${error.message}`);
-        }
+            const checkInterval = setInterval(async () => {
+                attempts++;
+                showStatus(`Проверка статуса изображения (${attempts}/${maxAttempts})`);
+                
+                try {
+                    const response = await fetchWithTimeout(`${KLING_API_URL}/${taskId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }, 10000);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (data.code !== 0) {
+                        throw new Error(data.message || 'Ошибка статуса задачи');
+                    }
+                    
+                    const status = data.data.task_status;
+                    
+                    if (status === 'succeed') {
+                        clearInterval(checkInterval);
+                        resolve(data.data.task_result.images[0].url);
+                    } else if (status === 'failed') {
+                        clearInterval(checkInterval);
+                        reject(new Error(data.data.task_status_msg || 'Ошибка генерации'));
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        reject(new Error('Превышено время ожидания генерации'));
+                    }
+                } catch (error) {
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        reject(new Error(`Ошибка проверки статуса: ${error.message}`));
+                    }
+                }
+            }, interval);
+        });
     }
     
     // Добавление изображения в чат
@@ -587,15 +590,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Отображение статуса
     function showStatus(text) {
         statusDiv.textContent = text;
-        statusDiv.className = 'status';
         
         // Автоматическая очистка статуса через 5 секунд
         clearTimeout(showStatus.timeout);
         if (text !== 'Готов к работе ✅') {
             showStatus.timeout = setTimeout(() => {
-                if (statusDiv.textContent === text) {
-                    statusDiv.textContent = 'Готов к работе ✅';
-                }
+                statusDiv.textContent = 'Готов к работе ✅';
             }, 5000);
         }
     }
