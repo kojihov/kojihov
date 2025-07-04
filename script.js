@@ -6,40 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_TOKENS = 32768;
     
     // Базовый промпт для DeepSeek
-    const BASE_PROMPT = **Ты — Growth Architect (Senior Level).** Твоя роль — давать **применимые на практике решения** в 4 областях: Продажи, Обучение, Копирайтинг, Тех->Маркетинг.  
+    const BASE_PROMPT = `**Ты — Growth Architect (Senior Level).** Твоя роль — давать **применимые на практике решения** в 4 областях: Продажи, Обучение, Копирайтинг, Тех->Маркетинг.  
 **Стиль ответа — четкий, выгодно-ориентированный, с умеренной детализацией:**
 
 **✅ КАК ФОРМАТИРОВАТЬ ОТВЕТ:**
-1.  **Заголовок:** \[Дисциплина] → [Суть задачи]\ (Пример: \[Продажи] → Скрипт для холодного охвата B2B\).
+1.  **Заголовок:** \`[Дисциплина] → [Суть задачи]\` (Пример: \`[Продажи] → Скрипт для холодного охвата B2B\`).
 2.  **Структура блока (по необходимости):**
     *   **Задача:** Суть проблемы/запроса (1-2 предложения).
     *   **Стратегия:** Ключевой подход (фокус на **выгоде** или **механике решения**).
     *   **Конкретные шаги (MVP):** Что сделать *прямо сейчас* (─, •). **Тех. характеристики — только если критичны для выгоды.**
     *   **KPI/Оценка:** Как измерить результат (цифры > мнения). Если цифр нет — скажи, *где их взять*.
-3.  **Инструменты:** Маркированные списки (─, •), **жирный текст для терминов/выгод**, таблицы для сравнения (>3 пунктов), эмодзи (🚀/💡/⚠️) — умеренно.
-
-**✅ КАК РАБОТАТЬ С КОНТЕНТОМ:**
-*   **Главное — Польза Клиента:** Всегда переводи технические характеристики в **ощутимую выгоду** (Пример: "Аккумулятор 5000mAh" → "**Работает без подзарядки 2 дня** ⚡").
-*   **Данные > Теория:** Давай измеримые инсайты. Нет данных? Укажи источник для их получения (e.g., "Замеряй конверсию в CRM за 2 недели").
-*   **MVP Принцип:** "Сначала сделай **ЭТО** (самое важное), потом — то".
-*   **Язык:** Профессиональный, но живой. Без воды и канцелярита. Точно. Практично.
-
-**✅ КАК РАСПОЗНАВАТЬ ЗАДАЧУ (Авто-режимы):**
-*   **\[Обучение]\:** "Напиши тренинг...", "Как научить менеджеров...".  
-    *→ Действуй:* Разбей тему на **навыки → Практика (ролевка, чек-лист) → Метрика успеха → Экзамен (1 ошибка = провал)**.
-*   **\[Копирайтинг/SEO]\:** "Оптимизируй текст...", "Напиши продающий пост...".  
-    *→ Действуй:* Тип запроса (коммерч./инфо) → Внедри **ключи (H1-H3), LSI, микроформаты → Чек-лист (плотность ключей 1-2%, УТП вначале, CTA)**.
-*   **\[Продажи]\:** "Повысь конверсию...", "Дай скрипт для...".  
-    *→ Действуй:* Аудит воронки → **Скрипты (фокус на снятии возражений) → KPI менеджеров → Инструменты контроля**.
-*   **\[Тех->Маркетинг]\:** "Переведи техописание...", "Сделай описание выгодным...".  
-    *→ Действуй:* Выдели тех.хар-ки → Преврати в **пользу → Добавь SEO-ключи (аудиозапросы, ошибки) → Формат: \[Характеристика] → [Польза] → [Ключи]\**.
-*   **Гибрид?** Комбинируй блоки (e.g., \[Обучение + Копирайтинг] → Скрипты UGC-отзывов\).
-
-**❌ ЗАПРЕЩЕНО БЕЗ ИСКЛЮЧЕНИЙ:**
-*   Общие советы без конкретики ("Улучшите коммуникацию", "Создайте воронку").
-*   Теория без практического применения *прямо сейчас*.
-*   "Это зависит..." *без минимум 2 вариантов действий под разные условия*.
-*   Вода: длинные вступления, очевидные утверждения, "красивости" без пользы.;
+3.  **Инструменты:** Маркированные списки (─, •), **жирный текст для терминов/выгод**, таблицы для сравнения (>3 пунктов), эмодзи (🚀/💡/⚠️) — умеренно.`;
     
     // Элементы интерфейса
     const chatContainer = document.getElementById('chat-container');
@@ -94,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Переключение режимов
     modeToggleBtn.addEventListener('click', () => {
         currentMode = currentMode === 'chat' ? 'image' : 'chat';
-        modeToggleBtn.textContent = Режим: ${currentMode === 'chat' ? 'Чат' : 'Генерация изображений'};
+        modeToggleBtn.textContent = `Режим: ${currentMode === 'chat' ? 'Чат' : 'Генерация изображений'}`;
         fileUploadContainer.classList.toggle('hidden', currentMode === 'image');
         userInput.placeholder = currentMode === 'chat' 
             ? "Введите сообщение (Shift+Enter для переноса, Enter для отправки)..." 
@@ -109,10 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadedFiles.forEach(file => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
-            fileItem.innerHTML = 
-                ${file.name} (${formatFileSize(file.size)})
-                ×
-            ;
+            fileItem.innerHTML = `
+                <span>${file.name} (${formatFileSize(file.size)})</span>
+                <button class="remove-file" data-name="${file.name}">×</button>
+            `;
             fileList.appendChild(fileItem);
         });
         
@@ -172,17 +149,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 
                 const filesInfo = fileContents.map((content, i) => 
-                    \n\n[Файл ${i+1}: ${uploadedFiles[i].name}]\n${content}
+                    `\n\n[Файл ${i+1}: ${uploadedFiles[i].name}]\n${content}`
                 ).join('\n\n');
                 
-                fullMessage = ${filesInfo}\n\n${message};
+                fullMessage = `${filesInfo}\n\n${message}`;
                 
                 // Очищаем загруженные файлы
                 uploadedFiles = [];
                 fileList.innerHTML = '';
                 fileUpload.value = '';
             } catch (error) {
-                addMessage(⚠️ **Ошибка чтения файлов**\n${error.message}, 'bot');
+                addMessage(`⚠️ **Ошибка чтения файлов**\n${error.message}`, 'bot');
                 return;
             }
         }
@@ -201,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': Bearer ${apiKey}
+                    'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
                     model: DEFAULT_MODEL,
@@ -213,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error?.message || Ошибка API: ${response.status});
+                throw new Error(errorData.error?.message || `Ошибка API: ${response.status}`);
             }
             
             const data = await response.json();
@@ -242,12 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Ошибка:', error);
             removeTypingIndicator();
-            addMessage(⚠️ **Ошибка запроса**\n${error.message}, 'bot');
+            addMessage(`⚠️ **Ошибка запроса**\n${error.message}`, 'bot');
             showStatus('Ошибка запроса ❌');
         }
     }
     
-    // Генерация изображения
+    // Генерация изображения (исправленная версия)
     async function generateImage() {
         const prompt = userInput.value.trim();
         const accessKey = localStorage.getItem('klingAccessKey');
@@ -264,54 +241,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Добавляем сообщение пользователя
-        addMessage(🎨 **Запрос на генерацию изображения:**\n${prompt}, 'user');
+        addMessage(`🎨 **Запрос на генерацию изображения:**\n${prompt}`, 'user');
         userInput.value = '';
         
         showStatus('Генерация изображения... 🎨');
         showTypingIndicator();
 
         try {
-            // Проверка поддержки Web Crypto API
-            if (!window.crypto || !window.crypto.subtle) {
-                throw new Error("Web Crypto API не поддерживается. Используйте Chrome/Firefox/Edge");
-            }
-
             // Генерация JWT токена
             const token = await generateKlingToken(accessKey, secretKey);
             if (!token) throw new Error('Ошибка генерации токена');
             
-            console.log('Сгенерированный JWT токен:', token);
-
             const payload = {
                 model_name: "kling-v2",
                 prompt: prompt,
                 negative_prompt: "ugly, deformed, blurry, watermark, text",
-                resolution: "1k",
+                resolution: "1024x1024",
                 aspect_ratio: "1:1",
                 n: 1
             };
 
             const response = await fetchWithTimeout(KLING_API_URL, {
                 method: 'POST',
-                mode: 'cors', // Явное разрешение CORS
                 headers: {
-                    'Authorization': Bearer ${token},
-                    'Content-Type': 'application/json',
-                    'Origin': window.location.origin // Добавляем Origin
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
-            }, 120000); // Увеличенный таймаут до 120 секунд
+            }, 120000);
 
-            // Обработка HTTP ошибок
             if (!response.ok) {
-                let errorText = 'Неизвестная ошибка';
-                try {
-                    const errorData = await response.json();
-                    errorText = errorData.message || JSON.stringify(errorData);
-                } catch (e) {
-                    errorText = await response.text();
-                }
-                throw new Error(Ошибка API [${response.status}]: ${errorText});
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Ошибка API: ${response.status}`);
             }
 
             const data = await response.json();
@@ -320,9 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const taskId = data.data.task_id;
-            console.log('Задача создана, ID:', taskId);
-            
-            // Запускаем проверку статуса задачи
             const imageUrl = await checkKlingTaskStatus(taskId, token);
             
             if (imageUrl) {
@@ -333,15 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Ошибка генерации изображения:', error);
+            let errorMessage = `⚠️ **Ошибка генерации**\n${error.message}`;
             
-            // Детализированные сообщения об ошибках
-            let errorMessage;
-            if (error.name === 'AbortError') {
-                errorMessage = '⚠️ **Таймаут запроса**\nСервер не ответил за 120 секунд';
-            } else if (error.message.includes('Failed to fetch')) {
-                errorMessage = '⚠️ **Сетевая ошибка**\nПроверьте:\n1. VPN/антивирус\n2. Блокировку провайдера\n3. Ключи Kling AI';
-            } else {
-                errorMessage = ⚠️ **Ошибка генерации**\n${error.message};
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = '⚠️ **Сетевая ошибка**\nПроверьте подключение к интернету и VPN';
             }
             
             addMessage(errorMessage, 'bot');
@@ -351,33 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Fetch с таймаутом
-    async function fetchWithTimeout(url, options, timeout) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-        
-        try {
-            const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
-                credentials: 'omit' // Важно для CORS
-            });
-            clearTimeout(timeoutId);
-            return response;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            
-            // Детализация ошибок
-            if (error.name === 'AbortError') {
-                throw new Error(Таймаут запроса (${timeout} мс));
-            } else if (error.message.includes('Failed to fetch')) {
-                throw new Error('Failed to fetch: Проверьте сетевое соединение');
-            }
-            throw error;
-        }
-    }
-    
-    // Генерация JWT токена для Kling (Web Crypto API)
+    // Генерация JWT токена для Kling (исправленная версия)
     async function generateKlingToken(accessKey, secretKey) {
         try {
             const currentTime = Math.floor(Date.now() / 1000);
@@ -394,9 +321,17 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Кодирование заголовка и payload
             const encoder = new TextEncoder();
-            const encodedHeader = base64UrlEncode(JSON.stringify(header));
-            const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-            const unsignedToken = ${encodedHeader}.${encodedPayload};
+            const encodedHeader = btoa(JSON.stringify(header))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+                
+            const encodedPayload = btoa(JSON.stringify(payload))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+                
+            const unsignedToken = `${encodedHeader}.${encodedPayload}`;
             
             // Создание подписи
             const key = await crypto.subtle.importKey(
@@ -413,26 +348,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 encoder.encode(unsignedToken)
             );
             
-            // Конвертация подписи в base64url
-            const signatureArray = Array.from(new Uint8Array(signature));
-            const signatureString = String.fromCharCode(...signatureArray);
-            const encodedSignature = base64UrlEncode(signatureString);
+            // Правильное кодирование подписи
+            const signatureArray = new Uint8Array(signature);
+            let signatureStr = '';
+            signatureArray.forEach(byte => {
+                signatureStr += String.fromCharCode(byte);
+            });
             
-            return ${unsignedToken}.${encodedSignature};
+            const encodedSignature = btoa(signatureStr)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+            
+            return `${unsignedToken}.${encodedSignature}`;
             
         } catch (e) {
             console.error('Ошибка генерации JWT токена:', e);
-            throw new Error(Ошибка токена: ${e.message});
+            throw new Error(`Ошибка токена: ${e.message}`);
         }
     }
-    
-    // Кодирование в Base64URL
-    function base64UrlEncode(str) {
-        const base64 = btoa(unescape(encodeURIComponent(str)));
-        return base64
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
+
+    // Fetch с таймаутом
+    async function fetchWithTimeout(url, options, timeout) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+                credentials: 'omit'
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            
+            if (error.name === 'AbortError') {
+                throw new Error(`Таймаут запроса (${timeout} мс)`);
+            } else if (error.message.includes('Failed to fetch')) {
+                throw new Error('Failed to fetch: Проверьте сетевое соединение');
+            }
+            throw error;
+        }
     }
     
     // Проверка статуса задачи Kling (с интервалами)
@@ -444,19 +402,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const checkInterval = setInterval(async () => {
                 attempts++;
-                showStatus(Проверка статуса изображения (${attempts}/${maxAttempts}));
+                showStatus(`Проверка статуса изображения (${attempts}/${maxAttempts})`);
                 
                 try {
-                    const response = await fetchWithTimeout(${KLING_API_URL}/${taskId}, {
+                    const response = await fetchWithTimeout(`${KLING_API_URL}/${taskId}`, {
                         method: 'GET',
                         headers: { 
-                            'Authorization': Bearer ${token},
-                            'Origin': window.location.origin
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
                         }
                     }, 10000);
                     
                     if (!response.ok) {
-                        throw new Error(HTTP error: ${response.status});
+                        throw new Error(`HTTP error: ${response.status}`);
                     }
                     
                     const data = await response.json();
@@ -479,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     if (attempts >= maxAttempts) {
                         clearInterval(checkInterval);
-                        reject(new Error(Ошибка проверки статуса: ${error.message}));
+                        reject(new Error(`Ошибка проверки статуса: ${error.message}`));
                     }
                 }
             }, interval);
@@ -490,14 +448,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function addImageToChat(url, prompt) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'bot-message');
-        messageDiv.innerHTML = 
-            
-                🎨
-                Сгенерировано изображение
-            
-            
-            Описание: ${prompt}
-        ;
+        messageDiv.innerHTML = `
+            <div class="header-block">
+                <span class="header-emoji">🎨</span>
+                <strong>Сгенерировано изображение</strong>
+            </div>
+            <img src="${url}" alt="${prompt}" class="generated-image">
+            <p><em>Описание:</em> ${prompt}</p>
+        `;
         messagesDiv.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -508,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ограничение размера файла (5 МБ)
             const MAX_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
-                reject(new Error(Файл слишком большой (${formatFileSize(file.size)}). Максимум 5 МБ));
+                reject(new Error(`Файл слишком большой (${formatFileSize(file.size)}). Максимум 5 МБ`));
                 return;
             }
             
@@ -522,8 +480,121 @@ document.addEventListener('DOMContentLoaded', () => {
     // Добавление сообщения в чат
     function addMessage(content, sender) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', ${sender}-message);
+        messageDiv.classList.add('message', `${sender}-message`);
         
         // Форматирование блоков кода
         let formattedContent = content;
-        formattedContent = formattedContent.replace(/
+        formattedContent = formattedContent.replace(/```(\w+)?\s*([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+        formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Форматирование заголовков с эмодзи
+        formattedContent = formattedContent.replace(
+            /^(\p{Emoji_Presentation}\s*)\*\*(.*?)\*\*/gmu, 
+            '<div class="header-block"><span class="header-emoji">$1</span><strong>$2</strong></div>'
+        );
+        
+        messageDiv.innerHTML = formattedContent;
+        messagesDiv.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Показать индикатор печати
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.classList.add('message', 'bot-message');
+        
+        const typingContent = document.createElement('div');
+        typingContent.className = 'typing-indicator';
+        
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'typing-dot';
+            typingContent.appendChild(dot);
+        }
+        
+        typingDiv.appendChild(typingContent);
+        messagesDiv.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Удалить индикатор печати
+    function removeTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+    
+    // Очистка чата
+    clearBtn.addEventListener('click', () => {
+        messagesDiv.innerHTML = '';
+        chatHistory = [
+            {
+                role: "system",
+                content: BASE_PROMPT
+            }
+        ];
+        showStatus('Чат очищен 🧹');
+    });
+    
+    // Экспорт чата
+    exportBtn.addEventListener('click', () => {
+        const chatContent = Array.from(messagesDiv.querySelectorAll('.message'))
+            .map(msg => {
+                const sender = msg.classList.contains('user-message') ? 'Вы' : 'Ассистент';
+                const textContent = msg.textContent;
+                
+                // Обработка изображений
+                const images = msg.querySelectorAll('.generated-image');
+                let imageText = '';
+                if (images.length > 0) {
+                    imageText = '\n[Изображение]: ' + Array.from(images)
+                        .map(img => img.src)
+                        .join('\n');
+                }
+                
+                return `${sender}: ${textContent}${imageText}`;
+            })
+            .join('\n\n');
+        
+        const blob = new Blob([chatContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `deepseek-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showStatus('Чат экспортирован 📥');
+    });
+    
+    // Отображение статуса
+    function showStatus(text) {
+        statusDiv.textContent = text;
+        
+        // Автоматическая очистка статуса через 5 секунд
+        clearTimeout(showStatus.timeout);
+        if (text !== 'Готов к работе ✅') {
+            showStatus.timeout = setTimeout(() => {
+                statusDiv.textContent = 'Готов к работе ✅';
+            }, 5000);
+        }
+    }
+    
+    // Обработчики событий
+    sendBtn.addEventListener('click', sendMessage);
+    
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Инициализация статуса
+    showStatus('Готов к работе ✅');
+});

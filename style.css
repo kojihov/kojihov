@@ -1,4 +1,3 @@
-/* Обновленные стили с улучшенным оформлением кода */
 :root {
     --primary: #6e6edf;
     --dark: #1a1a2e;
@@ -7,19 +6,7 @@
     --bot-msg: #f5f5f5;
     --code-bg: #f8f8f8;
     --code-border: #e0e0e0;
-}
-
-/* Стили для эмодзи-заголовков */
-.header-block {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 1.2em;
-}
-
-.header-emoji {
-  margin-right: 10px;
-  font-size: 1.4em;
+    --error-color: #d32f2f;
 }
 
 * {
@@ -53,33 +40,52 @@ header {
 }
 
 .api-key-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
     gap: 10px;
     margin-top: 15px;
-    justify-content: center;
 }
 
-#api-key {
-    width: 300px;
+input[type="password"] {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
 }
 
-#save-key {
+button {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#save-keys {
     background-color: var(--primary);
     color: white;
     border: none;
     padding: 10px 15px;
     border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-size: 14px;
 }
 
-#save-key:hover {
+#save-keys:hover {
     background-color: #5a5ac0;
+}
+
+.mode-toggle {
+    margin: 15px 0;
+    text-align: center;
+}
+
+#mode-toggle {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+}
+
+#mode-toggle:hover {
+    background: #5a5ac0;
+    transform: scale(1.05);
 }
 
 #chat-container {
@@ -121,7 +127,18 @@ header {
     white-space: pre-wrap;
 }
 
-/* Стили для блоков кода */
+.header-block {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.header-emoji {
+    margin-right: 10px;
+    font-size: 1.4em;
+}
+
 pre {
     background-color: var(--code-bg);
     border: 1px solid var(--code-border);
@@ -141,6 +158,45 @@ code {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    flex-direction: column;
+}
+
+#file-upload-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.file-upload-label {
+    cursor: pointer;
+    padding: 8px 12px;
+    background: #f0f0f5;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.file-upload-label:hover {
+    background: #e0e0ea;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    background: #f8f8f8;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.remove-file {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 5px;
 }
 
 #user-input {
@@ -157,17 +213,31 @@ code {
     background-color: var(--primary);
     color: white;
     border: none;
-    padding: 0 30px;
+    padding: 12px;
     border-radius: 8px;
-    cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s;
     align-self: flex-end;
-    height: 50px;
 }
 
 #send-btn:hover {
     background-color: #5a5ac0;
+}
+
+.generated-image {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 10px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+}
+
+.error-message {
+    color: var(--error-color);
+    background-color: #ffebee;
+    border-left: 4px solid var(--error-color);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 0 4px 4px 0;
 }
 
 footer {
@@ -192,10 +262,8 @@ footer {
 #clear-btn, #export-btn {
     padding: 8px 15px;
     border-radius: 4px;
-    cursor: pointer;
     font-size: 14px;
     border: none;
-    transition: opacity 0.3s;
 }
 
 #clear-btn {
@@ -216,7 +284,6 @@ footer {
     background-color: #388E3C;
 }
 
-/* Анимация загрузки */
 .typing-indicator {
     display: inline-block;
     position: relative;
@@ -258,19 +325,9 @@ footer {
     }
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-    
     .api-key-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    #api-key {
-        width: 100%;
+        grid-template-columns: 1fr;
     }
     
     .input-area {
@@ -279,8 +336,6 @@ footer {
     
     #send-btn {
         width: 100%;
-        height: auto;
-        padding: 12px;
     }
     
     footer {
@@ -294,89 +349,6 @@ footer {
     }
 }
 
-.api-key-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.mode-toggle {
-    margin: 15px 0;
-    text-align: center;
-}
-
-#mode-toggle {
-    background: #6e6edf;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-#mode-toggle:hover {
-    background: #5a5ac0;
-    transform: scale(1.05);
-}
-
-.file-upload-container {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.file-upload-label {
-    cursor: pointer;
-    padding: 8px 12px;
-    background: #f0f0f5;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-}
-
-.file-upload-label:hover {
-    background: #e0e0ea;
-}
-
-.file-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 10px;
-    background: #f8f8f8;
-    border-radius: 4px;
-    margin-top: 5px;
-}
-
-.remove-file {
-    background: none;
-    border: none;
-    color: #ff4d4d;
-    font-size: 1.2em;
-    cursor: pointer;
-    padding: 0 5px;
-}
-
-.generated-image {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 10px 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
 .hidden {
     display: none;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .api-key-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .input-area {
-        flex-direction: column;
-    }
 }
