@@ -1,7 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Проверка доступности библиотеки JWT
-    console.log('jwtEncode available:', typeof jwtEncode);
-    
     // Константы API
     const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
     const KLING_API_URL = "https://api-singapore.klingai.com/v1/images/generations";
@@ -90,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (klingAccessKey) localStorage.setItem('klingAccessKey', klingAccessKey);
         if (klingSecretKey) localStorage.setItem('klingSecretKey', klingSecretKey);
         
-        showStatus('Ключи сохранены! ✅', 'success');
+        showStatus('Ключи сохранены! ✅');
     });
     
     // Переключение режимов
@@ -152,12 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const apiKey = localStorage.getItem('deepseekApiKey');
         
         if (!message && uploadedFiles.length === 0) {
-            showStatus('Введите сообщение или загрузите файл', 'warning');
+            showStatus('Введите сообщение или загрузите файл');
             return;
         }
         
         if (!apiKey) {
-            showStatus('Введите и сохраните DeepSeek API ключ! 🔑', 'error');
+            showStatus('Введите и сохраните DeepSeek API ключ! 🔑');
             return;
         }
         
@@ -195,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
             content: fullMessage
         });
         
-        showStatus('Генерация ответа... ⏳', 'processing');
+        showStatus('Генерация ответа... ⏳');
         showTypingIndicator();
         
         try {
@@ -230,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Удалить индикатор печати и добавить ответ
             removeTypingIndicator();
             addMessage(botResponse, 'bot');
-            showStatus('Готов к работе ✅', 'ready');
+            showStatus('Готов к работе ✅');
             
             // Подсветка кода
             if (typeof hljs !== 'undefined') {
@@ -245,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Ошибка:', error);
             removeTypingIndicator();
             addMessage(`⚠️ **Ошибка запроса**\n${error.message}`, 'bot');
-            showStatus('Ошибка запроса ❌', 'error');
+            showStatus('Ошибка запроса ❌');
         }
     }
     
@@ -256,12 +253,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const secretKey = localStorage.getItem('klingSecretKey');
         
         if (!accessKey || !secretKey) {
-            showStatus('Введите ключи Kling AI! 🔑', 'error');
+            showStatus('Введите ключи Kling AI! 🔑');
             return;
         }
         
         if (!prompt) {
-            showStatus('Введите описание изображения', 'warning');
+            showStatus('Введите описание изображения');
             return;
         }
 
@@ -269,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(`🎨 **Запрос на генерацию изображения:**\n${prompt}`, 'user');
         userInput.value = '';
         
-        showStatus('Генерация изображения... 🎨', 'processing');
+        showStatus('Генерация изображения... 🎨');
         showTypingIndicator();
 
         try {
@@ -277,9 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = await generateKlingToken(accessKey, secretKey);
             if (!token) throw new Error('Ошибка генерации токена');
             
-            // Выводим токен для отладки
             console.log('Сгенерированный JWT токен:', token);
-            addDebugMessage(`Сгенерированный токен: ${token}`, 'debug');
 
             const payload = {
                 model_name: "kling-v2",
@@ -324,14 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (imageUrl) {
                 addImageToChat(imageUrl, prompt);
-                showStatus('Изображение готово! ✅', 'success');
+                showStatus('Изображение готово! ✅');
             } else {
                 throw new Error('Не удалось получить изображение');
             }
         } catch (error) {
             console.error('Ошибка генерации изображения:', error);
             addMessage(`⚠️ **Ошибка генерации**\n${error.message}`, 'bot');
-            showStatus('Ошибка генерации ❌', 'error');
+            showStatus('Ошибка генерации ❌');
         } finally {
             removeTypingIndicator();
         }
@@ -358,28 +353,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Генерация JWT токена для Kling (соответствует стандарту JWT)
+    // Генерация JWT токена для Kling (Web Crypto API)
     async function generateKlingToken(accessKey, secretKey) {
         try {
             const currentTime = Math.floor(Date.now() / 1000);
+            const header = { 
+                "alg": "HS256", 
+                "typ": "JWT" 
+            };
+            
             const payload = {
                 "iss": accessKey,
                 "exp": currentTime + 1800,
                 "nbf": currentTime - 5
             };
             
-            // Исправлено: используем правильное имя функции
-            if (typeof jwtEncode === 'function') {
-                return jwtEncode(payload, secretKey, { algorithm: 'HS256' });
-            } else {
-                throw new Error('Функция jwtEncode недоступна');
-            }
+            // Кодирование заголовка и payload
+            const encoder = new TextEncoder();
+            const encodedHeader = base64UrlEncode(JSON.stringify(header));
+            const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+            const data = `${encodedHeader}.${encodedPayload}`;
+            
+            // Создание подписи
+            const keyData = encoder.encode(secretKey);
+            const key = await crypto.subtle.importKey(
+                'raw',
+                keyData,
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+            
+            const signature = await crypto.subtle.sign(
+                'HMAC', 
+                key, 
+                encoder.encode(data)
+            );
+            
+            // Кодирование подписи
+            const signatureArray = Array.from(new Uint8Array(signature));
+            const signatureString = String.fromCharCode(...signatureArray);
+            const encodedSignature = base64UrlEncode(signatureString);
+            
+            return `${data}.${encodedSignature}`;
             
         } catch (e) {
             console.error('Ошибка генерации JWT токена:', e);
-            addDebugMessage(`Ошибка генерации JWT: ${e.message}`, 'error');
             return null;
         }
+    }
+    
+    // Кодирование в Base64URL
+    function base64UrlEncode(str) {
+        const base64 = btoa(unescape(encodeURIComponent(str)));
+        return base64
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
     }
     
     // Проверка статуса задачи Kling
@@ -480,27 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
     
-    // Добавление отладочного сообщения
-    function addDebugMessage(content, type = 'info') {
-        if (type === 'error') {
-            console.error(content);
-        } else {
-            console.log(content);
-        }
-        
-        const debugDiv = document.createElement('div');
-        debugDiv.classList.add('debug-message', type);
-        debugDiv.textContent = content;
-        document.body.appendChild(debugDiv);
-        
-        // Автоудаление через 10 секунд
-        setTimeout(() => {
-            if (document.body.contains(debugDiv)) {
-                document.body.removeChild(debugDiv);
-            }
-        }, 10000);
-    }
-    
     // Показать индикатор печати
     function showTypingIndicator() {
         const typingDiv = document.createElement('div');
@@ -538,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 content: BASE_PROMPT
             }
         ];
-        showStatus('Чат очищен 🧹', 'success');
+        showStatus('Чат очищен 🧹');
     });
     
     // Экспорт чата
@@ -572,38 +581,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        showStatus('Чат экспортирован 📥', 'success');
+        showStatus('Чат экспортирован 📥');
     });
     
     // Отображение статуса
-    function showStatus(text, type) {
+    function showStatus(text) {
         statusDiv.textContent = text;
         statusDiv.className = 'status';
         
-        // Очищаем предыдущие классы статуса
-        statusDiv.classList.remove(
-            'status-success', 
-            'status-error', 
-            'status-warning', 
-            'status-processing', 
-            'status-ready'
-        );
-        
-        switch (type) {
-            case 'success':
-                statusDiv.classList.add('status-success');
-                break;
-            case 'error':
-                statusDiv.classList.add('status-error');
-                break;
-            case 'warning':
-                statusDiv.classList.add('status-warning');
-                break;
-            case 'processing':
-                statusDiv.classList.add('status-processing');
-                break;
-            default:
-                statusDiv.classList.add('status-ready');
+        // Автоматическая очистка статуса через 5 секунд
+        clearTimeout(showStatus.timeout);
+        if (text !== 'Готов к работе ✅') {
+            showStatus.timeout = setTimeout(() => {
+                if (statusDiv.textContent === text) {
+                    statusDiv.textContent = 'Готов к работе ✅';
+                }
+            }, 5000);
         }
     }
     
@@ -618,5 +611,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Инициализация статуса
-    showStatus('Готов к работе ✅', 'ready');
+    showStatus('Готов к работе ✅');
 });

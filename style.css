@@ -22,19 +22,6 @@
   font-size: 1.4em;
 }
 
-/* Статусные сообщения с эмодзи */
-.status-success::before,
-.status-error::before,
-.status-ready::before {
-  content: "✅ ";
-}
-.status-error::before {
-  content: "❌ ";
-}
-.status-processing::before {
-  content: "⏳ ";
-}
-
 * {
     box-sizing: border-box;
     margin: 0;
