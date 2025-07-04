@@ -256,9 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 model_name: "kling-v2",
                 prompt: prompt,
                 negative_prompt: "ugly, deformed, blurry, watermark, text",
-                resolution: "1024x1024",
+                resolution: "1024_1024",
                 aspect_ratio: "1:1",
-                n: 1
+                n: 2
             };
 
             const response = await fetchWithTimeout(KLING_API_URL, {
