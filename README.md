@@ -1,1 +1,1 @@
-web api for for deepseek with own api-key
+web api for for deepseek&klingai with own api-keys
