@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Константы API
     const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
     const KLING_API_URL = "https://api-singapore.klingai.com/v1/images/generations";
+    const GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t";
     const DEFAULT_MODEL = 'deepseek-reasoner';
     const MAX_TOKENS = 32768;
     
@@ -281,93 +282,155 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('Ошибка запроса ❌');
         }
     }
+
+    async function translateToEnglish(text) {
+        // Проверка на английский текст
+        if (/^[a-zA-Z0-9\s\.,!?;:'"()\-]+$/.test(text)) {
+            return text;
+        }
+
+        try {
+            const response = await fetch(`${GOOGLE_TRANSLATE_URL}&q=${encodeURIComponent(text)}`);
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            
+            const data = await response.json();
+            return data[0][0][0] || text; // Возвращаем переведенный текст или оригинал
+        } catch (error) {
+            console.error('Ошибка перевода:', error);
+            
+            // Fallback: простой словарь для часто используемых слов
+            const dictionary = {
+                'портрет': 'portrait', 'пейзаж': 'landscape', 'космос': 'space',
+                'кошка': 'cat', 'собака': 'dog', 'дерево': 'tree', 'город': 'city',
+                'море': 'sea', 'солнце': 'sun', 'луна': 'moon', 'цветок': 'flower',
+                'машина': 'car', 'дом': 'house', 'человек': 'person', 'женщина': 'woman',
+                'мужчина': 'man', 'ребенок': 'child', 'вода': 'water', 'огонь': 'fire'
+            };
+            
+            return text.split(' ').map(word => {
+                const lowerWord = word.toLowerCase();
+                return dictionary[lowerWord] || word;
+            }).join(' ');
+        }
+    }
     
     // Генерация изображения (исправленная версия)
     async function generateImage() {
-        const prompt = userInput.value.trim();
-        const accessKey = localStorage.getItem('klingAccessKey');
-        const secretKey = localStorage.getItem('klingSecretKey');
-        
-        if (!accessKey || !secretKey) {
-            showStatus('Введите ключи Kling AI! 🔑');
-            return;
-        }
-        
-        if (!prompt) {
-            showStatus('Введите описание изображения');
-            return;
-        }
+    // 1. Получаем оригинальный промпт от пользователя
+    const originalPrompt = userInput.value.trim();
+    const accessKey = localStorage.getItem('klingAccessKey');
+    const secretKey = localStorage.getItem('klingSecretKey');
 
-        // Добавляем сообщение пользователя
-        addMessage(`🎨 **Запрос на генерацию изображения:**\n${prompt}`, 'user');
-        userInput.value = '';
-        
-        showStatus('Генерация изображения... 🎨');
-        showTypingIndicator();
-
-        try {
-            // Генерация JWT токена
-            const token = await generateKlingToken(accessKey, secretKey);
-            if (!token) throw new Error('Ошибка генерации токена');
-            
-            const payload = {
-                model_name: "kling-v2",
-                prompt: prompt,
-                negative_prompt: "nsfw, low quality, bad anatomy, text, watermark",
-                resolution: "2k",
-                aspect_ratio: "1:1",
-                n: 1,
-                guidance_scale: 7.5,
-                sampler: "euler_a",
-                seed: Math.floor(Math.random() * 1000000),
-                steps: 30
-            };
-
-            const response = await fetchWithTimeout(KLING_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': generateUUID()
-                },
-                body: JSON.stringify(payload)
-            }, 120000);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Ошибка API: ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (data.code !== 0) {
-                throw new Error(data.message || 'Ошибка генерации');
-            }
-            
-            const taskId = data.data.task_id;
-            const imageUrl = await checkKlingTaskStatus(taskId, token);
-            
-            if (imageUrl) {
-                addImageToChat(imageUrl, prompt);
-                showStatus('Изображение готово! ✅');
-            } else {
-                throw new Error('Не удалось получить изображение');
-            }
-        } catch (error) {
-            console.error('Ошибка генерации изображения:', error);
-            let errorMessage = `⚠️ **Ошибка генерации**\n${error.message}`;
-            
-            if (error.message.includes('risk control')) {
-                errorMessage = '⚠️ **Ошибка безопасности**\n1. Проверьте ключи\n2. Измените запрос\n3. Попробуйте позже';
-            } else if (error.message.includes('Failed to fetch')) {
-                errorMessage = '⚠️ **Сетевая ошибка**\nПроверьте подключение к интернету и VPN';
-            }
-            
-            addMessage(errorMessage, 'bot');
-            showStatus('Ошибка генерации ❌');
-        } finally {
-            removeTypingIndicator();
-        }
+    // 2. Валидация ввода
+    if (!accessKey || !secretKey) {
+        showStatus('Введите ключи Kling AI! 🔑');
+        addMessage('⚠️ **Ошибка**\nНеобходимо сохранить API-ключи Kling AI в настройках', 'bot');
+        return;
     }
+
+    if (!originalPrompt) {
+        showStatus('Введите описание изображения');
+        return;
+    }
+
+    // 3. Добавляем сообщение пользователя в чат
+    addMessage(`🎨 **Запрос на генерацию:**\n${originalPrompt}`, 'user');
+    userInput.value = '';
+    showStatus('Начинаю генерацию... 🎨');
+    showTypingIndicator();
+
+    try {
+        // 4. Перевод промпта на английский
+        let translatedPrompt;
+        try {
+            translatedPrompt = await translateToEnglish(originalPrompt);
+            if (translatedPrompt === originalPrompt) {
+                console.warn('Перевод не потребовался или не сработал');
+            }
+        } catch (translateError) {
+            console.error('Ошибка перевода:', translateError);
+            translatedPrompt = originalPrompt; // Используем оригинал если перевод не удался
+        }
+
+        // 5. Генерация JWT токена
+        const token = await generateKlingToken(accessKey, secretKey);
+        if (!token) {
+            throw new Error('Не удалось сгенерировать токен авторизации');
+        }
+
+        // 6. Формируем запрос
+        const payload = {
+            model_name: "kling-v2",
+            prompt: translatedPrompt,
+            negative_prompt: "nsfw, low quality, bad anatomy, text, watermark, deformed",
+            resolution: "1k",
+            aspect_ratio: "1:1",
+            n: 1,
+            guidance_scale: 7.5,
+            sampler: "euler_a",
+            seed: Math.floor(Math.random() * 1000000),
+            steps: 30
+        };
+
+        // 7. Отправка запроса в Kling API
+        const response = await fetchWithTimeout(KLING_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'X-Request-ID': generateUUID()
+            },
+            body: JSON.stringify(payload)
+        }, 120000); // Таймаут 120 секунд
+
+        // 8. Обработка ответа
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            const errorMsg = errorData?.message || `HTTP ошибка ${response.status}`;
+            throw new Error(errorMsg);
+        }
+
+        const responseData = await response.json();
+        
+        if (responseData.code !== 0) {
+            throw new Error(responseData.message || 'Неизвестная ошибка API');
+        }
+
+        // 9. Получение результата
+        const taskId = responseData.data.task_id;
+        showStatus('Генерация началась... ⏳');
+        
+        const imageUrl = await checkKlingTaskStatus(taskId, token);
+        
+        if (!imageUrl) {
+            throw new Error('Не удалось получить URL изображения');
+        }
+
+        // 10. Отображение результата
+        addImageToChat(imageUrl, originalPrompt); // Показываем оригинальный промпт
+        showStatus('Готово! ✅');
+
+    } catch (error) {
+        console.error('Ошибка генерации:', error);
+        
+        let errorMessage = `⚠️ **Ошибка генерации**\n${error.message}`;
+        
+        // Специальная обработка ошибок Kling
+        if (error.message.includes('risk control')) {
+            errorMessage = '🚫 **Ошибка безопасности**\n1. Проверьте ключи\n2. Измените запрос\n3. Попробуйте позже';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = '🌐 **Сетевая ошибка**\nПроверьте подключение и VPN';
+        } else if (error.message.includes('timed out')) {
+            errorMessage = '⏱ **Таймаут запроса**\nПопробуйте уменьшить сложность запроса';
+        }
+
+        addMessage(errorMessage, 'bot');
+        showStatus('Ошибка генерации ❌');
+        
+    } finally {
+        removeTypingIndicator();
+    }
+}
     
     // Генерация JWT токена для Kling (исправленная версия)
     async function generateKlingToken(accessKey, secretKey) {
