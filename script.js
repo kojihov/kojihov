@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const KLING_API_URL = "https://api-singapore.klingai.com/v1/images/generations";
     const GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t";
     const DEFAULT_MODEL = 'deepseek-reasoner';
-    const MAX_TOKENS = 32768;
+    const MAX_TOKENS = 8192;
     
     // Базовый промпт для DeepSeek
     const BASE_PROMPT = `**Ты — Growth Architect (Senior Level).** Твоя роль — давать **применимые на практике решения** в 5 областях: Продажи, Обучение, Копирайтинг, Тех->Маркетинг, Программирование.  
