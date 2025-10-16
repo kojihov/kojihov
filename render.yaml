@@ -1,31 +1,30 @@
 # render.yaml
-YAML
 services:
   # Основной сервис нашего бота
   - type: web
     name: manus-analytics-bot
     env: python
-    plan: free # Используем бесплатный тариф
+    plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn -c gunicorn_config.py main:app"
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
-      # ВАЖНО: BOT_TOKEN и ADMIN_ID удалены. Вы добавите их вручную в UI.
       - key: DATABASE_URL
         fromService:
           type: pserv
           name: manus-db
-          property: connectionString # Это свойство будет работать с Docker-сервисом
+          property: connectionString
 
   # Сервис базы данных MongoDB
-  - type: pserv # pserv = Private Service
+  - type: pserv
     name: manus-db
-    env: docker # Указываем, что используем Docker
-    repo: https://hub.docker.com/_/mongo # Ссылка на официальный образ MongoDB
+    # Указываем, что используем готовый Docker-образ
+    image:
+      url: mongo:latest # Используем официальный образ mongo последней версии
     plan: free
-    # Диск для хранения данных, чтобы они не терялись при перезапуске
+    # Диск для хранения данных
     disk:
       name: mongo-data
       mountPath: /data/db
