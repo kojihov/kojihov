@@ -1,0 +1,26 @@
+# render.yaml
+services:
+  - type: web
+    name: manus-analytics-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -c gunicorn_config.py main:app"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.12
+      - key: BOT_TOKEN
+        fromSecret: BOT_TOKEN
+      - key: ADMIN_ID
+        fromSecret: ADMIN_ID
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: manus-db
+          property: connectionString
+
+  - type: pserv
+    name: manus-db
+    env: mongo
+    plan: free

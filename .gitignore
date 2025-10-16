@@ -1,0 +1,12 @@
+pycache/
+*.pyc
+.venv/
+venv/
+Environment
+.env
+IDE
+.idea/
+.vscode/
+Logs
+*.log
+execution_log.md
