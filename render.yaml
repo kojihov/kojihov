@@ -1,15 +1,22 @@
-# render.yaml (v3.0 - "The Atlas Protocol")
 services:
+  # Веб-сервис для поддержания активности (требование Render Free Tier)
   - type: web
-    name: manus-analytics-bot
+    name: vitador-web
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -c gunicorn_config.py main:app"
-    healthCheckPath: /health
+    startCommand: "gunicorn main:app"
+    autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.12
-      # IMPORTANT: BOT_TOKEN, ADMIN_ID, and DATABASE_URL are now expected
-      # to be set manually in the Render.com Environment UI.
-      # This file no longer attempts to define them.
+      - fromGroup: vitador-env # Используем группу переменных
+
+  # Воркер для запуска самого Telegram-бота
+  - type: worker
+    name: vitador-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python bot.py"
+    autoDeploy: true
+    envVars:
+      - fromGroup: custom1 # Используем ту же группу переменных
