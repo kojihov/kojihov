@@ -1,6 +1,4 @@
-# render.yaml
 services:
-  # Основной сервис нашего бота
   - type: web
     name: manus-analytics-bot
     env: python
@@ -11,21 +9,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: manus-db
-          property: connectionString
-
-  # Сервис базы данных MongoDB
-  - type: pserv
-    name: manus-db
-    # Указываем, что используем готовый Docker-образ
-    image:
-      url: mongo:latest # Используем официальный образ mongo последней версии
-    plan: free
-    # Диск для хранения данных
-    disk:
-      name: mongo-data
-      mountPath: /data/db
-      sizeGB: 1
+      # Все секреты (BOT_TOKEN, ADMIN_ID, DATABASE_URL)
+      # теперь будут задаваться ИСКЛЮЧИТЕЛЬНО вручную
+      # в веб-интерфейсе Render для максимальной безопасности и гибкости.
