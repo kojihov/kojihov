@@ -1,0 +1,10 @@
+aiogram
+fastapi
+gunicorn
+httpx
+mongomock_motor
+motor
+pydantic
+pydantic-settings
+pymongo
+uvicorn
