@@ -131,3 +131,9 @@ fatal: Could not read from remote repository.
 Please make sure you have the correct access rights
 and the repository exists.
 ```
+# Manifest 26.0 Execution Log
+
+## Phase 1: Blueprint Correction
+# Intent: Replace the faulty render.yaml with the validated Atlas-ready blueprint.
+# Action: `cat <<'EOF' > render.yaml` (overwrite with provided v3.0 content).
+# Outcome: SUCCESS — render.yaml now references external secrets via Render UI and retains only PYTHON_VERSION env var.

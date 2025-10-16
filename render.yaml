@@ -1,4 +1,4 @@
-# render.yaml
+# render.yaml (v3.0 - "The Atlas Protocol")
 services:
   - type: web
     name: manus-analytics-bot
@@ -10,17 +10,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
-      - key: BOT_TOKEN
-        fromSecret: BOT_TOKEN
-      - key: ADMIN_ID
-        fromSecret: ADMIN_ID
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: manus-db
-          property: connectionString
-
-  - type: pserv
-    name: manus-db
-    env: mongo
-    plan: free
+      # IMPORTANT: BOT_TOKEN, ADMIN_ID, and DATABASE_URL are now expected
+      # to be set manually in the Render.com Environment UI.
+      # This file no longer attempts to define them.
