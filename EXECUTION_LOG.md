@@ -252,3 +252,61 @@ and the repository exists.
 # ```
 # (see `git log -1 --pretty=oneline` for commit hash confirmation)
 # ```
+# Manifest 31.0 Execution Log
+
+## Phase 1-2: Merge & Conquer
+# Intent: Rebuild the `main` branch from scratch by merging the working feature branches to create a single source of truth.
+# Action: `git checkout --orphan temp-main`, `git rm -rf .`, `git clean -fd`, `git checkout -b main`, `git merge feature/correct-deployment --allow-unrelated-histories --no-edit`, `git merge feature/interactive-console --allow-unrelated-histories --no-edit`
+# Outcome: SUCCESS — New `main` branch created and populated with the consolidated feature branches.
+# Verification:
+# Action: `git log --graph --oneline --all`
+# Output:
+# ```
+# *   1d14521 (HEAD -> main) Merge branch 'feature/correct-deployment'
+# |\
+# | * bb5f623 (work, feature/interactive-console, feature/correct-deployment) feat: add interactive console entry menu
+# | * 27f00dd Update script.js
+# | * 5e48340 Update script.js
+# | * 3ad6884 Update script.js
+# | * f05ffd9 Update script.js
+# | * 83649b9 Add files via upload
+# | * f09ffd1 Add files via upload
+# | * 69555b1 Update script.js
+# | * 84fc876 Add files via upload
+# | * 286cffe Add files via upload
+# | * eb165e1 Add files via upload
+# | * 6528919 Add files via upload
+# | * 1cc4184 Add files via upload
+# | * 9b3e4ce Update README.md
+# | * 29f372e Add files via upload
+# | * 6e706d2 Add files via upload
+# | * 0af1e0b Add files via upload
+# | * 1ea3672 Add files via upload
+# | * 6019de2 Add files via upload
+# | * 6f5ea19 Add files via upload
+# | * e5de864 Add files via upload
+# | * 0048205 Add files via upload
+# | * d6d2a4b Update script.js
+# | * 6ac41c1 Update script.js
+# | * e6b728e Update script.js
+# | * 66cd737 Update script.js
+# | * 1386d75 Update script.js
+# | * 7f26145 Update script.js
+# | * df3caec Update script.js
+# | * df58e2b Update style.css
+# | * ecc3fb8 Update script.js
+# | * f81faf2 Update script.js
+# | * e5077f3 Update script.js
+# | * 24c0ab5 Update script.js
+# | * 8acbf51 Update script.js
+# | * 731b8fb Update style.css
+# | * afcb0a4 Update script.js
+# | * 974541b Update script.js
+# | * 7043503 Update index.html
+# | * 728a792 index.html
+# | * 3e82711 Add files via upload
+# | * 660405b README.md
+# | * 8116834 Add files via upload
+# | * fbb7031 Initial commit
+# * 74ee1aa Initial empty baseline
+# ```
