@@ -1,5 +1,4 @@
 services:
-  # Web Service for activity and keep-alive
   - type: web
     name: vitador-web
     env: python
@@ -9,8 +8,6 @@ services:
     autoDeploy: true
     envVars:
       - fromGroup: custom1
-
-  # Worker to run the Telegram bot
   - type: worker
     name: vitador-bot
     env: python
