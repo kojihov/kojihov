@@ -179,8 +179,15 @@ async def fetch_matches_by_league(league_id: str, limit: int = 8) -> list[Match]
             continue
 
         matches.append(match)
-        if 0 < limit <= len(matches):
-            break
+
+    if not matches:
+        log.warning("No parsable upcoming matches for league: %s", league_id)
+        return []
+
+    matches.sort(key=lambda match: match.kickoff_time)
+
+    if limit > 0:
+        matches = matches[:limit]
 
     log.info("Prepared %s upcoming matches for league %s", len(matches), league_id)
     return matches
