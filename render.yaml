@@ -1,16 +1,17 @@
 services:
-  # Веб-сервис для поддержания активности (требование Render Free Tier)
+  # Web Service for activity and keep-alive
   - type: web
     name: vitador-web
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn main:app"
+    # Correct command to run FastAPI with Gunicorn and Uvicorn
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
     autoDeploy: true
     envVars:
-      - fromGroup: custom1 # Используем актуальную группу переменных
+      - fromGroup: custom1
 
-  # Воркер для запуска самого Telegram-бота
+  # Worker to run the Telegram bot (does not sleep)
   - type: worker
     name: vitador-bot
     env: python
@@ -19,4 +20,4 @@ services:
     startCommand: "python bot.py"
     autoDeploy: true
     envVars:
-      - fromGroup: custom1 # Используем ту же актуальную группу переменных
+      - fromGroup: custom1

@@ -1,52 +1,48 @@
-"""FastAPI application entrypoint for Manus Analytics."""
-
-from __future__ import annotations
-
+import os
 import asyncio
-from contextlib import asynccontextmanager
-from typing import Optional
-
+import requests
 from fastapi import FastAPI
+from threading import Thread
+import time
 
-from bot.main import shutdown_bot, start_bot
-from core.database import db_manager
-from core.logger import log
+# Retrieve the web app's URL from environment variables
+WEB_APP_URL = os.getenv("WEB_APP_URL")
 
-_bot_task: Optional[asyncio.Task[None]] = None
+app = FastAPI()
 
+def keep_alive():
+    """
+    A function that periodically sends a request to its own URL
+    to prevent the service from sleeping on Render's free tier.
+    """
+    while True:
+        try:
+            if WEB_APP_URL:
+                print(f"Keep-alive: Sending request to {WEB_APP_URL}")
+                requests.get(WEB_APP_URL)
+                print("Keep-alive: Request sent successfully.")
+            else:
+                print("Keep-alive: WEB_APP_URL not set. Skipping request.")
+        except requests.exceptions.RequestException as e:
+            print(f"Keep-alive: Failed to send request: {e}")
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):  # pragma: no cover - framework hook
-    """Manage startup and shutdown events for the ASGI application."""
+        # Sleep for 10 minutes (600 seconds)
+        time.sleep(600)
 
-    global _bot_task
+@app.on_event("startup")
+async def startup_event():
+    """
+    On application startup, run the keep_alive function in a separate thread.
+    """
+    print("Application startup: Starting keep-alive thread.")
+    thread = Thread(target=keep_alive)
+    thread.daemon = True
+    thread.start()
 
-    log.info("🚀 Application startup...")
-    await db_manager.connect()
-    _bot_task = asyncio.create_task(start_bot())
-
-    try:
-        yield
-    finally:
-        log.info("🔌 Application shutdown...")
-        await shutdown_bot()
-        if _bot_task is not None:
-            await _bot_task
-            _bot_task = None
-        await db_manager.close()
-
-
-app = FastAPI(lifespan=lifespan)
-
-
-@app.get("/health")
-async def health_check() -> dict[str, str]:
-    """Simple health endpoint for platform readiness probes."""
-
-    return {"status": "ok"}
-
-
-if __name__ == "__main__":  # pragma: no cover - manual execution entrypoint
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/")
+def read_root():
+    """
+    The main endpoint. Returns a status message.
+    This is the target URL for the keep-alive request.
+    """
+    return {"status": "Analytics System is Active. Eternal Vigilance."}
