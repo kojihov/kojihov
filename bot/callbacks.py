@@ -8,3 +8,11 @@ class LeagueCallbackFactory(CallbackData, prefix="league"):
 
     league_id: str
     league_name: str
+
+
+class MatchCallbackFactory(CallbackData, prefix="match"):
+    """Callback data for selecting a concrete match within a league."""
+
+    league_id: str
+    league_name: str
+    event_id: str

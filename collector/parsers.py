@@ -13,6 +13,9 @@ API_KEY = "3"
 API_URL_TEMPLATE = (
     "https://www.thesportsdb.com/api/v1/json/{api_key}/lookupevent.php?id={event_id}"
 )
+MATCHES_URL_TEMPLATE = (
+    "https://www.thesportsdb.com/api/v1/json/{api_key}/eventsnextleague.php?id={league_id}"
+)
 
 
 def _parse_kickoff(
@@ -100,3 +103,84 @@ async def fetch_factual_data(event_id: str) -> Optional[Match]:
         match.away_team,
     )
     return match
+
+
+async def fetch_matches_by_league(league_id: str, limit: int = 8) -> list[Match]:
+    """Fetch upcoming matches for the given league.
+
+    Parameters
+    ----------
+    league_id:
+        Identifier of the league in TheSportsDB API.
+    limit:
+        Maximum number of matches to return. Set to ``0`` or a negative
+        value to disable the limit.
+    """
+
+    url = MATCHES_URL_TEMPLATE.format(api_key=API_KEY, league_id=league_id)
+    log.info("Fetching upcoming matches for league %s", league_id)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=15.0)
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.HTTPStatusError as exc:
+        log.error(
+            "HTTP error occurred while fetching league %s: %s - %s",
+            league_id,
+            exc.response.status_code,
+            exc.response.text,
+        )
+        return []
+    except httpx.HTTPError as exc:  # pragma: no cover - network failures
+        log.error("Network error while fetching league %s: %s", league_id, exc)
+        return []
+    except Exception as exc:  # pragma: no cover - unexpected parsing
+        log.exception(
+            "Unexpected error while requesting matches for league %s: %s",
+            league_id,
+            exc,
+        )
+        return []
+
+    events = payload.get("events") if isinstance(payload, dict) else None
+    if not events:
+        log.warning("No upcoming matches found for league: %s", league_id)
+        return []
+
+    matches: list[Match] = []
+    for event in events:
+        event_id = event.get("idEvent")
+        if not event_id:
+            continue
+
+        try:
+            kickoff_dt = _parse_kickoff(
+                event.get("dateEvent"),
+                event.get("strTime"),
+                event.get("strTimestamp"),
+            )
+
+            match = Match(
+                _id=f"thesportsdb_{event_id}",
+                match_id=event_id,
+                home_team=event.get("strHomeTeam", ""),
+                away_team=event.get("strAwayTeam", ""),
+                kickoff_time=kickoff_dt,
+            )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            log.exception(
+                "Failed to parse match %s for league %s: %s",
+                event_id,
+                league_id,
+                exc,
+            )
+            continue
+
+        matches.append(match)
+        if 0 < limit <= len(matches):
+            break
+
+    log.info("Prepared %s upcoming matches for league %s", len(matches), league_id)
+    return matches
