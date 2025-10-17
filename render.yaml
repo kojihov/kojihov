@@ -1,4 +1,5 @@
 services:
+  # 1. The Web Service (The "Keep-Alive" Dummy)
   - type: web
     name: vitador-web
     env: python
@@ -9,13 +10,14 @@ services:
     envVars:
       - fromGroup: custom1
 
+  # 2. The Worker (The Real Bot)
   - type: worker
-    name: vitador-bot
+    name: manus-analytics-bot
     env: python
     plan: free
-    healthCheckPath: /  # disable Render health checks for this worker
+    healthCheckPath: /  # Disable HTTP health check
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python run_bot.py"
+    startCommand: "python run_bot.py"  # The correct command
     autoDeploy: true
     envVars:
       - fromGroup: custom1
