@@ -180,3 +180,31 @@ and the repository exists.
 # -rw-r--r-- 1 root root 105K Oct 16 13:54 PROJECT_BLUEPRINT.md
 # ```
 
+# Manifest 25.0 Execution Log
+
+## Phase 1: Branch Isolation
+# Intent: Create and switch to a new feature branch.
+# Action: `git checkout -b feature/correct-deployment`
+# Outcome: SUCCESS — Branch created and active (`git branch --show-current` returned `feature/correct-deployment`).
+
+## Phase 2: Entry Point Creation
+# Intent: Create the new `run_bot.py` file.
+# Action: `cat <<'EOF' > run_bot.py ...`
+# Outcome: SUCCESS — File created with dedicated bot startup sequence.
+
+## Phase 3: Blueprint Correction
+# Intent: Modify `render.yaml` to use the new start command.
+# Action: Applied update to `render.yaml` replacing `python bot.py` with `python run_bot.py`.
+# Outcome: SUCCESS — Render blueprint now references the dedicated entrypoint.
+
+## Phase 4: Git Push
+# Intent: Push the new branch `feature/correct-deployment` to the remote.
+# Action: `git push origin feature/correct-deployment`
+# Outcome: FAILURE — Authentication to GitHub not available in this environment.
+# Git Push Output:
+# ```
+# Username for 'https://github.com': 
+# Password for 'https://github.com': 
+# remote: No anonymous write access.
+# fatal: Authentication failed for 'https://github.com/kojihov/vitador.git/'
+# ```

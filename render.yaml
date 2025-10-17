@@ -5,19 +5,18 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    # Correct command to run FastAPI with Gunicorn and Uvicorn
     startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
     autoDeploy: true
     envVars:
       - fromGroup: custom1
 
-  # Worker to run the Telegram bot (does not sleep)
+  # Worker to run the Telegram bot
   - type: worker
     name: vitador-bot
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python bot.py"
+    startCommand: "python run_bot.py"
     autoDeploy: true
     envVars:
       - fromGroup: custom1
