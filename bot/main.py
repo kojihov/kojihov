@@ -12,7 +12,7 @@ from analysis.engine import AnalysisEngine
 from core.config import settings
 from core.database import db_manager
 from core.logger import log
-from .handlers import common
+from .handlers import common, matches
 
 _bot: Optional[Bot] = None
 _dispatcher: Optional[Dispatcher] = None
@@ -63,6 +63,7 @@ async def start_bot() -> None:
 
     log.info("Configuring bot routers...")
     _dispatcher.include_router(common.router)
+    _dispatcher.include_router(matches.router)
 
     log.info("Starting bot polling...")
     try:

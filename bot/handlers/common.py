@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 from analysis.engine import AnalysisEngine
 from analysis.models import Outcome
@@ -15,6 +15,7 @@ from analysis.verifier import verifier
 from collector.parsers import fetch_factual_data
 from core.config import settings
 from models.match import MatchAnalysis
+from bot.keyboards import get_main_menu_keyboard
 
 router = Router()
 
@@ -31,13 +32,27 @@ def parse_score(score: str) -> Optional[Tuple[int, int]]:
 
 @router.message(Command(commands=["start"]))
 async def handle_start(message: Message) -> None:
-    """Handle the /start command."""
+    """Handle the /start command by showing the interactive menu."""
+
     start_message = (
         "Добро пожаловать в 'Manus Analytics'!\n\n"
         "Я — аналитическая система для предсказания исходов спортивных событий.\n"
         "Архитектор: **Манус**\nСтратег: **Павел Сергеевич**"
     )
-    await message.answer(start_message)
+    await message.answer(start_message, reply_markup=get_main_menu_keyboard())
+
+
+@router.callback_query(F.data == "main_menu")
+async def cq_show_main_menu(callback: CallbackQuery) -> None:
+    """Return the user to the main inline menu."""
+
+    await callback.message.edit_text(
+        "Добро пожаловать в 'Manus Analytics'!\n\n"
+        "Я — аналитическая система для предсказания исходов спортивных событий.\n"
+        "Архитектор: **Манус**\nСтратег: **Павел Сергеевич**",
+        reply_markup=get_main_menu_keyboard(),
+    )
+    await callback.answer()
 
 
 @router.message(Command(commands=["analyze"]), F.from_user.id == settings.ADMIN_USER_ID)
