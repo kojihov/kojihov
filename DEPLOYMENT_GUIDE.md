@@ -13,23 +13,23 @@ This guide provides step-by-step instructions to deploy the `Manus Analytics` ap
 1. Log in to your Render Dashboard.
 2. Click the **"New +"** button and select **"Blueprint"**.
 3. Connect your GitHub account and select the repository for this project (e.g., `kojihov/manus-analytics`).
-4. Render will automatically detect and parse the `render.yaml` file. You will see a plan to create two new services: `manus-analytics-bot` (Web Service) and `manus-db` (MongoDB Private Service).
+4. Render will automatically detect and parse the `render.yaml` file. You will see a plan to create two new services: `manus-analytics-console` (Web Service) and `manus-analytics-telegram-bot` (Worker).
 5. Click **"Apply"** to confirm the creation of the services.
 
 ### **Step 2: Configure Environment Secrets**
 
 After the services are created, you need to provide the secret values.
 
-1. Navigate to the **"Environment"** tab for the `manus-analytics-bot` service.
-2. Under the "Secret Files" or "Environment Variables" section, you will see two variables that need values: `BOT_TOKEN` and `ADMIN_ID`.
-3. Click **"Add Secret"** (or similar) for each:
-    * For `BOT_TOKEN`, paste your Telegram bot token.
-    * For `ADMIN_ID`, paste your Telegram user ID.
-4. Save the changes. Render will automatically trigger a new deploy to apply the secrets.
+1. Navigate to the **"Environment"** tab for each service (`manus-analytics-console` and `manus-analytics-telegram-bot`).
+2. Both services read their secrets from the same environment group (configured in Render as `custom1`). Ensure that group contains at least:
+    * `BOT_TOKEN` — your Telegram bot token.
+    * `ADMIN_ID` — your Telegram user ID.
+    * `DATABASE_URL` — connection string for your MongoDB instance.
+3. Save the changes. Render will automatically trigger a new deploy to apply the secrets.
 
 ### **Step 3: Verify Deployment**
 
-1. Go to the **"Logs"** tab for the `manus-analytics-bot` service.
+1. Go to the **"Logs"** tab for the `manus-analytics-telegram-bot` service.
 2. Wait for the build and deployment process to complete. You should see logs similar to this:
     ```
     Your service is live 🎉
