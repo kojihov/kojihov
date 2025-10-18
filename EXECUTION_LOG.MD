@@ -57,3 +57,15 @@ fatal: could not read Username for 'https://github.com': terminal prompts disabl
 # Intent: Confirm the unified configuration leaves runtime features intact.
 # Action: `python -m unittest`
 # Outcome: SUCCESS — All tests passed using the mongomock fallback for MongoDB.
+
+# Manifest 71 Execution Log
+
+## Phase 1: Unified Service Keep-Alive
+# Intent: Restore the keep-alive heartbeat so the single-service deployment remains active on the Render Free tier.
+# Action: Updated `main.py` to start a background thread that pings the deployed `/health` endpoint while the bot runs inside the FastAPI lifespan.
+# Outcome: SUCCESS — Unified service now prevents idle shutdowns and retains graceful startup/shutdown logging.
+
+## Phase 2: Regression Testing
+# Intent: Verify the unified entrypoint continues to operate with all subsystems.
+# Action: `python -m unittest`
+# Outcome: SUCCESS — 10 tests passed using the mongomock fallback (see console log for MongoDB unavailability notice).
