@@ -7,6 +7,6 @@ services:
     startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
     healthCheckPath: /health
     envVars:
-      - fromGroup: manus-analytics-secrets
+      - fromGroup: custom1
       - key: PYTHON_VERSION
         value: 3.11.5

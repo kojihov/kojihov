@@ -69,3 +69,9 @@ fatal: could not read Username for 'https://github.com': terminal prompts disabl
 # Intent: Verify the unified entrypoint continues to operate with all subsystems.
 # Action: `python -m unittest`
 # Outcome: SUCCESS — 10 tests passed using the mongomock fallback (see console log for MongoDB unavailability notice).
+# Manifest 70.1 Execution Log
+
+## Phase 1: Render Blueprint Correction
+# Intent: Align env var group reference with existing Render configuration.
+# Action: Updated render.yaml to reference the `custom1` environment group and refreshed the deployment guide accordingly.
+# Outcome: SUCCESS — Blueprint now links to an existing group, avoiding Render sync errors.

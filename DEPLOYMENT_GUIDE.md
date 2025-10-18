@@ -19,7 +19,7 @@ This guide describes how to deploy the unified Manus Analytics service—FastAPI
 ### **Step 2: Configure Secrets**
 
 1. After the service is provisioned, open its **Environment → Environment Groups** section.
-2. Create or reuse the environment group referenced in `render.yaml` (`manus-analytics-secrets`).
+2. Create or reuse the environment group referenced in `render.yaml` (`custom1`).
 3. Add the required variables to the group:
    * `BOT_TOKEN` – Telegram bot token.
    * `ADMIN_ID` – Telegram user ID allowed to access admin commands.
