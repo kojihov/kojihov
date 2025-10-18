@@ -1,0 +1,47 @@
+diff --git a/render.yaml b/render.yaml
+index 589651b..89be3cd 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -1,5 +1,4 @@
+ services:
+-  # Web Service for activity and keep-alive
+   - type: web
+     name: vitador-web
+     env: python
+@@ -9,8 +8,6 @@ services:
+     autoDeploy: true
+     envVars:
+       - fromGroup: custom1
+-
+-  # Worker to run the Telegram bot
+   - type: worker
+     name: vitador-bot
+     env: python
+diff --git a/run_bot.py b/run_bot.py
+index 946a859..cd5a7f7 100644
+--- a/run_bot.py
++++ b/run_bot.py
+@@ -3,15 +3,9 @@ from core.database import db_manager
+ from core.logger import log
+ from bot.main import start_bot, shutdown_bot
+ 
+-
+ async def main():
+-    """
+-    The main entry point for the application.
+-    Connects to the database and starts the bot.
+-    """
+     log.info("🚀 Application startup...")
+     await db_manager.connect()
+-
+     try:
+         await start_bot()
+     finally:
+@@ -19,7 +13,6 @@ async def main():
+         await db_manager.close()
+         log.info("🛑 Application shutdown complete.")
+ 
+-
+ if __name__ == "__main__":
+     try:
+         asyncio.run(main())

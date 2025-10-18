@@ -1,0 +1,22 @@
+services:
+  # 1. The Web Service (The "Keep-Alive" Dummy)
+  - type: web
+    name: vitador-web
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
+    autoDeploy: true
+    envVars:
+      - fromGroup: custom1
+
+  # 2. The Worker (The Real Bot)
+  - type: worker
+    name: manus-analytics-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python run_bot.py"
+    autoDeploy: true
+    envVars:
+      - fromGroup: custom1
