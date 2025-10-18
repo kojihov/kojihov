@@ -1,12 +1,12 @@
 services:
   - type: web
-    name: manus-analytics-unified
+    name: manus-analytics-service
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
     healthCheckPath: /health
     envVars:
+      - fromGroup: manus-analytics-secrets
       - key: PYTHON_VERSION
         value: 3.11.5
-      # BOT_TOKEN, ADMIN_ID, and DATABASE_URL should be supplied via Render environment settings
