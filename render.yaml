@@ -1,0 +1,22 @@
+services:
+  # Web service keeps FastAPI alive for status checks and background tasks
+  - type: web
+    name: manus-analytics-console
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app"
+    autoDeploy: true
+    envVars:
+      - fromGroup: custom1
+
+  # Worker hosts the Telegram bot and analytical pipelines
+  - type: worker
+    name: manus-analytics-telegram-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python run_bot.py"
+    autoDeploy: true
+    envVars:
+      - fromGroup: custom1
