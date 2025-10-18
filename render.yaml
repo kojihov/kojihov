@@ -1,22 +1,12 @@
 services:
-  # Web service keeps FastAPI alive for status checks and background tasks
   - type: web
-    name: manus-analytics-console
+    name: manus-analytics-unified
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app"
-    autoDeploy: true
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
+    healthCheckPath: /health
     envVars:
-      - fromGroup: custom1
-
-  # Worker hosts the Telegram bot and analytical pipelines
-  - type: worker
-    name: manus-analytics-telegram-bot
-    env: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python run_bot.py"
-    autoDeploy: true
-    envVars:
-      - fromGroup: custom1
+      - key: PYTHON_VERSION
+        value: 3.11.5
+      # BOT_TOKEN, ADMIN_ID, and DATABASE_URL should be supplied via Render environment settings

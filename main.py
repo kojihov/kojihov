@@ -1,33 +1,52 @@
-import os
 import asyncio
-import requests
+from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
-from threading import Thread
-import time
 
-WEB_APP_URL = os.getenv("WEB_APP_URL")
-app = FastAPI()
+from bot.main import shutdown_bot, start_bot
+from core.database import db_manager
+from core.logger import log
 
-def keep_alive():
-    while True:
+
+@asynccontextmanager
+def lifespan(app: FastAPI):
+    """Manage startup and shutdown for the unified web + bot service."""
+
+    log.info("🚀 UNIFIED SERVICE: Application startup...")
+    await db_manager.connect()
+
+    bot_task = asyncio.create_task(start_bot())
+
+    def _log_bot_result(task: asyncio.Task) -> None:
         try:
-            if WEB_APP_URL:
-                print(f"Keep-alive: Sending request to {WEB_APP_URL}")
-                requests.get(WEB_APP_URL)
-                print("Keep-alive: Request sent successfully.")
-            else:
-                print("Keep-alive: WEB_APP_URL not set. Skipping request.")
-        except requests.exceptions.RequestException as e:
-            print(f"Keep-alive: Failed to send request: {e}")
-        time.sleep(600)
+            exc = task.exception()
+        except asyncio.CancelledError:
+            return
+        if exc:
+            log.error("Bot polling task terminated with an exception.", exc_info=exc)
+        else:
+            log.info("Bot polling task finished gracefully.")
 
-@app.on_event("startup")
-async def startup_event():
-    print("Application startup: Starting keep-alive thread.")
-    thread = Thread(target=keep_alive)
-    thread.daemon = True
-    thread.start()
+    bot_task.add_done_callback(_log_bot_result)
+    log.info("✅ Bot polling started in the background.")
 
-@app.get("/")
-def read_root():
-    return {"status": "Analytics System is Active. Eternal Vigilance."}
+    try:
+        yield
+    finally:
+        log.info("🔌 UNIFIED SERVICE: Application shutdown...")
+        await shutdown_bot()
+        if not bot_task.done():
+            bot_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await bot_task
+        await db_manager.close()
+        log.info("Shutdown complete.")
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    """Simple health endpoint for Render probes."""
+
+    return {"status": "ok"}
